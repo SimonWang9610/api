@@ -3,7 +3,7 @@
 /// More dartdocs go here.
 library api;
 
-export 'src/api_base.dart';
+export 'src/client_base.dart';
 
 export 'src/methods.dart';
 export 'src/models/cancel_token.dart';

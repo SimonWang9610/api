@@ -3,9 +3,9 @@ enum ErrorType {
   sendTimeout("Timeout on sending request"),
   receiveTimeout("Timeout on receiving data"),
   response("Error related to Response"),
-  cancel("Request is canceled"),
-  other("other"),
-  abort("abort");
+  cancel("Request is canceled/ or aborted"),
+  other("other");
+  // abort("abort");
 
   final String message;
   const ErrorType(this.message);

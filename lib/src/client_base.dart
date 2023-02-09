@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'models/error.dart';
 import 'models/cancel_token.dart';
@@ -30,11 +31,78 @@ enum ApiMethod {
   const ApiMethod(this.value);
 }
 
-class Client {
+abstract class Client {
   final HttpClientAdapter _adapter = createAdapter();
 
-  Client();
+  Client._();
 
+  factory Client([RetryConfig? config]) {
+    if (config != null) {
+      return _RetryClient(config);
+    } else {
+      return _SingleRequestClient();
+    }
+  }
+
+  Future<ApiResponse> get(
+    Uri url, {
+    Map<String, String>? headers,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+  });
+
+  Future<ApiResponse> head(
+    Uri url, {
+    Map<String, String>? headers,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+  });
+
+  Future<ApiResponse> post(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+  });
+
+  Future<ApiResponse> put(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+  });
+
+  Future<ApiResponse> patch(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+  });
+
+  Future<ApiResponse> delete(
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+  });
+
+  void close({bool force = false}) {
+    _adapter.close(force: force);
+  }
+}
+
+class _SingleRequestClient extends Client {
+  _SingleRequestClient() : super._();
+
+  @override
   Future<ApiResponse> get(
     Uri url, {
     Map<String, String>? headers,
@@ -49,6 +117,7 @@ class Client {
         options: options,
       );
 
+  @override
   Future<ApiResponse> head(
     Uri url, {
     Map<String, String>? headers,
@@ -63,6 +132,7 @@ class Client {
         options: options,
       );
 
+  @override
   Future<ApiResponse> post(
     Uri url, {
     Map<String, String>? headers,
@@ -81,6 +151,7 @@ class Client {
         options: options,
       );
 
+  @override
   Future<ApiResponse> put(
     Uri url, {
     Map<String, String>? headers,
@@ -99,6 +170,7 @@ class Client {
         options: options,
       );
 
+  @override
   Future<ApiResponse> patch(
     Uri url, {
     Map<String, String>? headers,
@@ -117,6 +189,7 @@ class Client {
         options: options,
       );
 
+  @override
   Future<ApiResponse> delete(
     Uri url, {
     Map<String, String>? headers,
@@ -183,10 +256,6 @@ class Client {
       }
     }
   }
-
-  void close({bool force = false}) {
-    _adapter.close(force: force);
-  }
 }
 
 class RetryConfig {
@@ -206,26 +275,12 @@ class RetryConfig {
 typedef WhenException = bool Function(RequestException);
 typedef WhenResponseStatus = bool Function(int);
 
-class RetryClient extends Client {
+class _RetryClient extends _SingleRequestClient {
   final RetryConfig config;
 
-  RetryClient(this.config) {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _timestamp++;
-      print("seconds: $_timestamp");
-    });
-  }
-
-  int _timestamp = 0;
-  late Timer _timer;
+  _RetryClient(this.config);
 
   RetryToken? _retryToken;
-
-  @override
-  void close({bool force = false}) {
-    super.close(force: force);
-    _timer.cancel();
-  }
 
   @override
   Future<ApiResponse> _send(
@@ -237,25 +292,27 @@ class RetryClient extends Client {
     CancelToken? cancelToken,
     ConnectionOption? options,
   }) async {
+    print("sending with retrying");
     ApiRequest? request;
 
-    int i = 0;
+    int i = 1;
 
     for (;;) {
       final canceledByMainToken = cancelToken?.isCanceled ?? false;
 
-      // when the [cancelToken] is expired
-      // we should stop retrying since [cancelToken] is the main token associated with the retry token
-      if (canceledByMainToken) {
-        throw RequestException(
-          type: ErrorType.cancel,
-          message: "canceled by the given cancel token, so stopping retrying",
-        );
-      }
+      // // when the [cancelToken] is expired
+      // // we should stop retrying since [cancelToken] is the main token associated with the retry token
+      // if (canceledByMainToken) {
+      //   throw RequestException(
+      //     type: ErrorType.cancel,
+      //     message: "canceled by the given cancel token, so stopping retrying",
+      //   );
+      // }
 
       _refreshToken(i, cancelToken);
+      print("trying on $i");
 
-      request = _createRequest(
+      request = _createRequestFromOld(
         method,
         url,
         headers,
@@ -263,6 +320,7 @@ class RetryClient extends Client {
         body: body,
         encoding: encoding,
         cancelToken: cancelToken,
+        options: options,
       );
 
       ResponseBody? resBody;
@@ -286,22 +344,19 @@ class RetryClient extends Client {
 
         print(
             "api status: ${resBody.statusCode}, continue retry $continueRetry");
+        print("main token canceled: ${cancelToken?.isCanceled ?? false}");
+
+        // log("api status: ${resBody.statusCode}, need retry: $continueRetry");
+        // log("main token canceled: ${cancelToken?.isCanceled ?? false}");
 
         if (!continueRetry) {
           return ApiResponse.fromStream(resBody);
         }
       }
 
-      // once the cancel token is completed/expired/canceled
-      // the current retry token will also be canceled
-      // so the below await would be executed instantly
-      // and continue the next iteration fastly
-      // however, it would throw [ErrorType.cancel] before the next iteration goes through
-      // due to the cancellation of the main token
+      // [RetryToken.token] is always the fast completed [Future] if its has a main token
+      // therefore, the token would be completed once the main token is canceled
       try {
-        // once retry token starts, it will complete after its duration
-        // here instead of start a new request instantly
-        // we wait for the retry token is canceled
         await _retryToken!.token;
       } catch (e) {
         if (e is TokenException) {
@@ -319,14 +374,21 @@ class RetryClient extends Client {
   }
 
   void _refreshToken(int count, [CancelToken? mainToken]) {
-    if (count == 0) {
+    if (mainToken != null && mainToken.isCanceled) {
+      throw RequestException(
+        type: ErrorType.cancel,
+        message: "canceled by the given cancel token, so stopping retrying",
+      );
+    }
+
+    if (count == 1) {
       _retryToken = RetryToken(config.retryTimeout, mainToken);
     } else {
-      _retryToken = _retryToken!.retry();
+      _retryToken = _retryToken!.refresh();
     }
   }
 
-  ApiRequest _createRequest(
+  ApiRequest _createRequestFromOld(
     ApiMethod method,
     Uri url,
     Map<String, String>? headers, {
@@ -359,8 +421,8 @@ class RetryClient extends Client {
           persistentConnection: old.persistentConnection,
           followRedirects: old.followRedirects,
           maxDirects: old.maxRedirects,
-          cancelToken: _retryToken!.token,
-        );
+        )
+        ..cancelToken = _retryToken!.token;
     }
   }
 }

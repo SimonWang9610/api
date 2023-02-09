@@ -1,29 +1,40 @@
 import 'dart:async';
+import 'dart:developer';
 
-class CancelToken {
+abstract class CancelToken {
   final Completer _completer;
+  final Duration duration;
+  Timer? _timer;
 
   bool _started = false;
 
-  CancelToken._() : _completer = Completer();
-
-  factory CancelToken([Duration? duration]) {
-    if (duration == null) {
-      return CancelToken._();
-    } else {
-      return TimingToken(duration);
-    }
+  CancelToken(this.duration) : _completer = Completer() {
+    token.whenComplete(() => cancel(null));
   }
 
   void start() {
+    if (_started) return;
     _started = true;
+    _timer = _createTokenTimer();
+    // print("$runtimeType $hashCode has started its [Timer].");
   }
 
   void cancel(dynamic signal) {
-    print("token canceling");
-    if (_completer.isCompleted) return;
+    _cancelTimer();
+    if (_completer.isCompleted || !_started) return;
     _completer.complete(signal);
   }
+
+  void _cancelTimer() {
+    if (_timer != null) {
+      // print(
+      //     "$runtimeType $hashCode has canceled its [Timer]. It may happen to its [cancel] event, or ");
+      _timer?.cancel();
+      _timer = null;
+    }
+  }
+
+  Timer? _createTokenTimer();
 
   Future get token => _completer.future;
 
@@ -31,15 +42,11 @@ class CancelToken {
 }
 
 class TimingToken extends CancelToken {
-  final Duration duration;
-  TimingToken(this.duration, [dynamic signal]) : super._();
+  TimingToken(super.duration);
 
   @override
-  void start() {
-    if (_started) return;
-
-    super.start();
-    Future.delayed(duration, () => cancel(null));
+  Timer _createTokenTimer() {
+    return Timer(duration, () => cancel(null));
   }
 }
 
@@ -47,31 +54,26 @@ class TimingToken extends CancelToken {
 /// when [RetryToken] starts, the [mainToken] should also start
 class RetryToken extends CancelToken {
   final CancelToken? mainToken;
-  final Duration duration;
   final int count;
 
-  RetryToken(this.duration, [this.mainToken, this.count = 0]) : super._();
+  RetryToken(super.duration, [this.mainToken, this.count = 0]);
 
-  RetryToken retry([Duration? interval]) {
+  RetryToken refresh([Duration? interval]) {
+    _cancelTimer();
     return RetryToken(interval ?? duration, mainToken, count + 1);
   }
 
   void _cancelByMain() {
+    _cancelTimer();
     if (_completer.isCompleted) return;
     _completer.completeError(TokenException());
   }
 
   @override
-  void start() {
-    if (_started) return;
-    super.start();
+  Timer _createTokenTimer() {
     mainToken?.start();
     mainToken?.token.whenComplete(_cancelByMain);
-
-    Timer(duration, () {
-      // final skipCancel = mainToken?.isCanceled ?? false;
-
-      // if (!skipCancel) cancel(count);
+    return Timer(duration, () {
       cancel(count);
     });
   }
@@ -90,7 +92,7 @@ class RetryToken extends CancelToken {
 
 class TokenException implements Exception {
   final String reason;
-  TokenException([this.reason = "not cancel by it self"]);
+  const TokenException([this.reason = "not cancel by it self"]);
 
   @override
   String toString() {

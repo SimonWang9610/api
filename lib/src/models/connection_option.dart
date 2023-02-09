@@ -5,7 +5,6 @@ class ConnectionOption {
   final Duration? sendTimeout;
   final Duration? connectionTimeout;
   final Duration? receiveTimeout;
-  final Future? cancelToken;
   final bool persistentConnection;
   final bool followRedirects;
   final int maxDirects;
@@ -14,7 +13,6 @@ class ConnectionOption {
     this.sendTimeout,
     this.connectionTimeout,
     this.receiveTimeout,
-    this.cancelToken,
     this.persistentConnection = true,
     this.followRedirects = true,
     this.maxDirects = 5,
@@ -26,7 +24,6 @@ class ConnectionOption {
     Duration? sendTimeout,
     Duration? connectionTimeout,
     Duration? receiveTimeout,
-    Future? cancelToken,
     bool? persistentConnection,
     bool? followRedirects,
     int? maxDirects,
@@ -35,7 +32,6 @@ class ConnectionOption {
       sendTimeout: sendTimeout ?? this.sendTimeout,
       connectionTimeout: connectionTimeout ?? this.connectionTimeout,
       receiveTimeout: receiveTimeout ?? this.receiveTimeout,
-      cancelToken: cancelToken ?? this.cancelToken,
       persistentConnection: persistentConnection ?? this.persistentConnection,
       followRedirects: followRedirects ?? this.followRedirects,
       maxDirects: maxDirects ?? this.maxDirects,

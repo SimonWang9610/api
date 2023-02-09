@@ -33,4 +33,9 @@ class ApiResponse extends BaseResponse {
       statusMessage: resBody.statusMessage,
     );
   }
+
+  @override
+  String toString() {
+    return "ApiResponse(status: $statusCode, headers: $headers, isRedirect: $isRedirect, body: $body, length: $contentLength)";
+  }
 }

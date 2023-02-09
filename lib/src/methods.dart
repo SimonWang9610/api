@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'response/api_response.dart';
 import 'models/cancel_token.dart';
 import 'models/connection_option.dart';
-import 'api_base.dart';
+import 'client_base.dart';
 
 typedef ApiMethodWrapper = Future<ApiResponse> Function(Client);
 
 Future<ApiResponse> _withApi(ApiMethodWrapper fn,
     [RetryConfig? retryConfig]) async {
-  final api = retryConfig != null ? RetryClient(retryConfig) : Client();
+  final api = Client(retryConfig);
 
   try {
     return await fn(api);

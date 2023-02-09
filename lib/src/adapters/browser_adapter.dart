@@ -63,6 +63,7 @@ class BrowserAdapter extends HttpClientAdapter {
         ..responseType = responseType
         ..withCredentials = withCredentials,
       request.options,
+      request.cancelToken,
     );
     _xhrs.add(wrapper);
 
@@ -104,9 +105,10 @@ typedef ReadStateEventHandler = void Function(Event);
 class _HttpRequestWrapper {
   final HttpRequest xhr;
   final ConnectionOption option;
+  final Future? cancelToken;
   final Set<StreamSubscription> _subscriptions = {};
 
-  _HttpRequestWrapper(this.xhr, this.option);
+  _HttpRequestWrapper(this.xhr, this.option, [this.cancelToken]);
 
   int? _receiveStart;
 
@@ -195,8 +197,8 @@ class _HttpRequestWrapper {
 
   /// cancel this request if the result has not been completed
   void registerCancelToken(Completer<ResponseBody> completer) async {
-    if (option.cancelToken != null) {
-      option.cancelToken!.whenComplete(() {
+    if (cancelToken != null) {
+      cancelToken!.whenComplete(() {
         if (!completer.isCompleted) {
           completer.completeError(
             RequestException(

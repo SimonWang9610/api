@@ -22,7 +22,7 @@ class IoClientAdapter extends HttpClientAdapter {
 
     final dataStream = request.finalize();
 
-    final httpClient = _createHttpClient(request.options);
+    final httpClient = _createHttpClient(request.options, request.cancelToken);
 
     final connectedRequest = await _connectWithTimeout(httpClient, request);
 
@@ -32,7 +32,7 @@ class IoClientAdapter extends HttpClientAdapter {
     int receiveStart = DateTime.now().millisecondsSinceEpoch;
 
     final HttpClientResponse streamedResponse =
-        await _receiveWithTimeout(connectedRequest, request);
+        await _receiveWithTimeout(connectedRequest, request, httpClient);
 
     return _receiveResponseData(
         streamedResponse, receiveStart, request, httpClient);
@@ -90,17 +90,17 @@ class IoClientAdapter extends HttpClientAdapter {
     );
   }
 
-  HttpClient _createHttpClient(ConnectionOption options) {
-    final idleTimeout = options.cancelToken == null
-        ? const Duration(seconds: 3)
-        : const Duration();
+  HttpClient _createHttpClient(ConnectionOption options,
+      [Future? cancelToken]) {
+    final idleTimeout =
+        cancelToken == null ? const Duration(seconds: 3) : const Duration();
 
-    if (options.cancelToken != null) {
+    if (cancelToken != null) {
       final HttpClient client = HttpClient();
 
       client.userAgent = null;
       client.idleTimeout = idleTimeout;
-      options.cancelToken?.whenComplete(
+      cancelToken.whenComplete(
         () {
           print("canceling complete");
 
@@ -165,7 +165,7 @@ class IoClientAdapter extends HttpClientAdapter {
     try {
       Future sending = request.addStream(dataStream);
       if (sendTimeout != null) {
-        sending.timeout(sendTimeout);
+        sending = sending.timeout(sendTimeout);
       }
 
       await sending;
@@ -181,22 +181,29 @@ class IoClientAdapter extends HttpClientAdapter {
   }
 
   Future<HttpClientResponse> _receiveWithTimeout(
-      HttpClientRequest clientRequest, BaseRequest request) async {
+      HttpClientRequest clientRequest,
+      BaseRequest request,
+      HttpClient client) async {
     late HttpClientResponse streamedResponse;
 
     try {
       Future<HttpClientResponse> closing = clientRequest.close();
-      // ! error if we set timeout here
-      // ! when the data stream is coming, this timeout is not be canceled
-      // ! it is also wired, the exception is not caught
-      // if (request.options.validReceiveTimeout) {
-      //   closing.timeout(request.receiveTimeout!);
-      // }
+
+      // must set timeout here
+      // since the timeout is expired once we start receiving data
+      // it is same as xhr.onLoadStart
+      if (request.options.validReceiveTimeout) {
+        closing = closing.timeout(request.receiveTimeout!);
+      }
       streamedResponse = await closing;
     } on TimeoutException {
+      //! once the timeout throws, we should close the client forcely
+      //! otherwise, the application may be stuck
+      client.close(force: true);
+
       throw RequestException(
         type: ErrorType.receiveTimeout,
-        message: "Timed out in ${request.receiveTimeout}",
+        message: "Timed out in ${request.receiveTimeout?.inMilliseconds}",
         method: request.method,
         url: request.url.toString(),
       );
@@ -221,10 +228,17 @@ class IoClientAdapter extends HttpClientAdapter {
   }
 
   void _throwOtherException(Object e) {
-    throw RequestException(
-      type: ErrorType.other,
-      message: "$e",
-    );
+    if (e is HttpException) {
+      throw RequestException(
+        type: ErrorType.cancel,
+        message: "$e",
+      );
+    } else {
+      throw RequestException(
+        type: ErrorType.other,
+        message: "$e",
+      );
+    }
   }
 
   @override

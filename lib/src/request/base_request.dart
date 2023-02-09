@@ -110,10 +110,11 @@ mixin ConnectionMixin on _FinalizedCheckable {
     _options = _options.copyWith(receiveTimeout: value);
   }
 
-  Future? get cancelToken => _options.cancelToken;
+  Future? _cancelToken;
+  Future? get cancelToken => _cancelToken;
   set cancelToken(Future? value) {
     _checkFinalized();
-    _options = _options.copyWith(cancelToken: value);
+    _cancelToken = value;
   }
 }
 
