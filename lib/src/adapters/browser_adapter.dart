@@ -6,7 +6,6 @@ import 'dart:async';
 import '../response/response_body.dart';
 import '../request/base_request.dart';
 import '../models/connection_option.dart';
-import '../models/byte_stream.dart';
 import '../models/error.dart';
 import '../utils.dart';
 import '../http_client_adapter.dart';
@@ -44,6 +43,14 @@ class BrowserAdapter extends HttpClientAdapter {
 
       wrapper.registerSendingTimeout(completer);
     });
+
+    if (request.shouldReportUploadProgress) {
+      wrapper.onUploadProgress((event) {
+        if (event.loaded != null && event.total != null) {
+          request.onUploadProgressCallback?.call(event.loaded!, event.total!);
+        }
+      });
+    }
 
     final data = await dataStream.toBytes();
     wrapper.send(data);
@@ -243,7 +250,7 @@ class _HttpRequestWrapper {
       if (!completer.isCompleted) {
         completer.completeError(
           RequestException(
-            type: ErrorType.response,
+            type: ErrorType.other,
             message: "XMLHttpRequest error",
           ),
           StackTrace.current,

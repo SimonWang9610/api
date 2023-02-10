@@ -25,9 +25,17 @@ abstract class _FinalizedCheckable {
     if (finalized) throw StateError("Can't finalize a finalized Request.");
     _finalized = true;
   }
+
+  void _assureFinalized() {
+    if (!_finalized) {
+      throw StateError(
+          "Some operations can only execute after a request has been finalized");
+    }
+  }
 }
 
-abstract class BaseRequest with _FinalizedCheckable, ConnectionMixin {
+abstract class BaseRequest
+    with _FinalizedCheckable, ConnectionMixin, StreamProgressMixin {
   final String method;
   final Uri url;
   final Map<String, String> headers;
@@ -50,9 +58,9 @@ abstract class BaseRequest with _FinalizedCheckable, ConnectionMixin {
   }
 
   @mustCallSuper
-  ByteStream finalize() {
+  ProgressedBytesStream finalize() {
     _finalize();
-    return const Stream.empty();
+    return ProgressedBytesStream.empty();
   }
 
   static final _tokenRE = RegExp(r"^[\w!#%&'*+\-.^`|~]+$");
@@ -187,5 +195,23 @@ mixin RequestBodyMixin on _FinalizedCheckable, ContentTypeMixin {
     }
 
     body = mapToQuery(fields, encoding: encoding);
+  }
+}
+
+mixin StreamProgressMixin on _FinalizedCheckable {
+  int? get contentLength;
+
+  OnProgressCallback? _onUploadProgressCallback;
+  OnProgressCallback? get onUploadProgressCallback => _onUploadProgressCallback;
+  set onUploadProgressCallback(OnProgressCallback? callback) {
+    _checkFinalized();
+    _onUploadProgressCallback = callback;
+  }
+
+  bool get shouldReportUploadProgress {
+    _assureFinalized();
+    return contentLength != null &&
+        contentLength! > 0 &&
+        _onUploadProgressCallback != null;
   }
 }

@@ -11,25 +11,21 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
-This library allows users to create different API requests (e.g., get, post, put, delete, patch) by referring to [http](https://pub.dev/packages/http) and [dio](https://pub.dev/packages/dio)
+This library allows users to create different API requests (e.g., get, post, put, delete, patch) by referring to [http](https://pub.dev/packages/http) and [dio](https://pub.dev/packages/dio).
+
+If you want to call remote APIs simply and do not need too many fancy features, you should try this package. Welcome to contribute and report any issue.
 
 ## Features
 
 1. Compared to `http` and `dio`, this library is very small and provide a different way to retry quest.
-   It allows you to retry a request by setting a `Duration` instead of waiting a `Duration` simply after the previous request is returned
-
+   It allows you to retry a request by setting a `Duration`. If the previous request does not return an acceptable response during `Duration`, it would be aborted and start the next request.
 2. support canceling a request at any time
-
-## Getting started
-
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+3. support `onUploadProgress`
+4. out of box, see examples
 
 ## Usage
 
-### Without retrying
-
-- get request
+### get request
 
 ```dart
 import "package:api/api.dart";
@@ -55,7 +51,38 @@ void _get() async {
 }
 ```
 
-- post request
+```dart
+Future<void> _retryGet([int? delayMs]) async {
+  final delay = delayMs != null && delayMs > 0 ? "?delay=$delayMs" : "";
+
+  final url = Uri.parse("http://127.0.0.1:8080$delay");
+
+  try {
+    final res = await Api.get(
+      url,
+      // headers: {"accept": "application/json"},
+      // cancelToken: TimingToken(Duration(seconds: 3)),
+      options: ConnectionOption(
+        connectionTimeout: Duration(seconds: 1),
+        sendTimeout: Duration(seconds: 1),
+        // receiveTimeout: Duration(seconds: 2),
+      ),
+      retryConfig: RetryConfig(
+        retryTimeout: Duration(seconds: 5),
+        retries: 3,
+        // retryWhenException: (e) => e.type != ErrorType.other,
+        // retryWhenStatus: (code) => code >= 300,
+      ),
+    );
+    print(res);
+  } catch (e) {
+    print(e);
+  }
+}
+
+```
+
+### post request
 
 ```dart
 import "dart:convert";
@@ -88,6 +115,113 @@ void _post_() async {
     print(res);
   } catch (e) {
     print(e);
+  }
+}
+```
+
+```dart
+Future<void> _retryPost() async {
+  final url = Uri.parse("http://127.0.0.1:8080");
+
+  final data = {
+    "hello": "api",
+    "delay": 2000,
+    "list": [100],
+  };
+
+  try {
+    final res = await Api.post(
+      url,
+      headers: {
+        "accept": "application/json",
+        "content-type": "application/json",
+      },
+      body: json.encode(data),
+      // cancelToken: TimingToken(Duration(seconds: 5)),
+      options: ConnectionOption(
+        connectionTimeout: Duration(seconds: 1),
+        sendTimeout: Duration(seconds: 1),
+        // receiveTimeout: Duration(seconds: 2),
+      ),
+      retryConfig: RetryConfig(
+        retryTimeout: Duration(seconds: 3),
+        retries: 3,
+        // retryWhenException: (e) => e.type != ErrorType.other,
+        retryWhenStatus: (code) => code >= 300,
+      ),
+    );
+    print(res);
+  } catch (e) {
+    print(e);
+  }
+}
+```
+
+### upload
+
+> `FormData.fileFromPath` is not supported on web
+> retrying for uploading is disabled by default since this case is unusual
+
+```dart
+import 'dart:async';
+import 'package:api/api.dart';
+
+void main() async {
+  await _uploadSingle("./assets/demo.mp4");
+}
+
+Future<void> _uploadSingle(String path) async {
+  final url = Uri.parse("http://127.0.0.1:8080/upload/single");
+  final file = await FormData.fileFromPath(path, field: "single");
+  final formData = FormData();
+
+  formData.addFile(file);
+
+  formData.addFields({"upload": "test"});
+
+  try {
+    final res = await Api.upload(url, formData,
+        cancelToken: TimingToken(Duration(seconds: 3)),
+        headers: {
+          "content-type": "application/json",
+        },
+        onUploadProgress: (sent, total) =>
+            print("total: $total, sent: $sent, percent: ${sent / total}"));
+    print(res);
+  } catch (e) {
+    print("e");
+  }
+}
+```
+
+```dart
+Future<void> _uploadMulti() async {
+  final url = Uri.parse("http://127.0.0.1:8080/upload/multi");
+  final file1 =
+      await FormData.fileFromPath("./assets/demo.mp4", field: "multi");
+
+  final file2 =
+      await FormData.fileFromPath("./assets/demo.png", field: "multi");
+
+  final formData = FormData();
+
+  formData.addFile(file1);
+  formData.addFile(file2);
+
+  formData.addFields({"upload": "test"});
+
+  try {
+    final res = await Api.upload(
+      url,
+      formData,
+      cancelToken: TimingToken(Duration(seconds: 3)),
+      headers: {
+        "content-type": "application/json",
+      },
+    );
+    print(res);
+  } catch (e) {
+    print("e");
   }
 }
 ```
@@ -146,6 +280,7 @@ The above ways can work together.
 
 ## TODO
 
-1. support `MultiPartRequest`
-2. testing `delete`, `patch` and `put`
+1. test upload on web
+2. test put/patch/delete/head
 3. unit tests
+4. support download

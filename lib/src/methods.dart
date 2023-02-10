@@ -1,8 +1,9 @@
 import 'dart:convert';
 
 import 'response/api_response.dart';
-import 'models/cancel_token.dart';
-import 'models/connection_option.dart';
+import 'models/models.dart';
+import 'multipart/form_data.dart';
+import 'method_enum.dart';
 import 'client_base.dart';
 
 typedef ApiMethodWrapper = Future<ApiResponse> Function(Client);
@@ -135,5 +136,25 @@ class Api {
           options: options,
         ),
         retryConfig,
+      );
+
+  static Future<ApiResponse> upload(
+    Uri url,
+    FormData formData, {
+    ApiMethod method = ApiMethod.post,
+    Map<String, String>? headers,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+    OnProgressCallback? onUploadProgress,
+  }) =>
+      _withApi(
+        (api) => api.upload(
+          url,
+          formData,
+          headers: headers,
+          cancelToken: cancelToken,
+          options: options,
+          onUploadProgress: onUploadProgress,
+        ),
       );
 }

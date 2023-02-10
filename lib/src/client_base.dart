@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
+import 'package:meta/meta.dart';
 
-import 'models/error.dart';
-import 'models/cancel_token.dart';
+import 'models/models.dart';
+import 'multipart/form_data.dart';
 import 'request/api_request.dart';
-import 'models/connection_option.dart';
+import 'request/multi_part_request.dart';
+import 'request/base_request.dart';
 import 'response/api_response.dart';
 import 'response/response_body.dart';
 
@@ -16,40 +17,27 @@ import 'adapter_stub.dart'
     if (dart.library.io) 'adapters/io_adapter.dart';
 
 import 'http_client_adapter.dart';
+import 'method_enum.dart';
 
 import "utils.dart";
-
-enum ApiMethod {
-  get("GET"),
-  post("POST"),
-  patch("PATCH"),
-  head("HEAD"),
-  put("PUT"),
-  delete("DELETE");
-
-  final String value;
-  const ApiMethod(this.value);
-}
 
 abstract class Client {
   final HttpClientAdapter _adapter = createAdapter();
 
   Client._();
 
-  factory Client([RetryConfig? config]) {
-    if (config != null) {
+  factory Client([RetryConfig? config, bool disableRetry = false]) {
+    if (config != null && !disableRetry) {
       return _RetryClient(config);
     } else {
       return _SingleRequestClient();
     }
   }
 
-  Future<ApiResponse> get(
-    Uri url, {
-    Map<String, String>? headers,
-    CancelToken? cancelToken,
-    ConnectionOption? options,
-  });
+  Future<ApiResponse> get(Uri url,
+      {Map<String, String>? headers,
+      CancelToken? cancelToken,
+      ConnectionOption? options});
 
   Future<ApiResponse> head(
     Uri url, {
@@ -92,6 +80,18 @@ abstract class Client {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+  });
+
+  Future<ApiResponse> upload(
+    Uri url,
+    FormData formData, {
+    ApiMethod method = ApiMethod.post,
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+    OnProgressCallback? onUploadProgress,
   });
 
   void close({bool force = false}) {
@@ -208,24 +208,95 @@ class _SingleRequestClient extends Client {
         options: options,
       );
 
-  Future<ApiResponse> _send(
-    ApiMethod method,
+  @override
+  Future<ApiResponse> upload(
     Uri url,
-    Map<String, String>? headers, {
+    FormData formData, {
+    ApiMethod method = ApiMethod.post,
+    Map<String, String>? headers,
     Object? body,
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
-  }) async {
+    OnProgressCallback? onUploadProgress,
+  }) =>
+      _send(
+        method,
+        url,
+        headers,
+        formData: formData,
+        cancelToken: cancelToken,
+        options: options,
+        onUploadProgress: onUploadProgress,
+      );
+
+  MultipartRequest _createMultipartRequest(
+    ApiMethod method,
+    Uri url,
+    FormData data, {
+    Map<String, String>? headers,
+    OnProgressCallback? onUploadProgress,
+  }) {
+    final request = MultipartRequest.fromFormData(method.value, url, data)
+      ..onUploadProgressCallback = onUploadProgress;
+
+    if (headers != null) request.headers.addAll(headers);
+    return request;
+  }
+
+  ApiRequest _createApiRequest(
+    ApiMethod method,
+    Uri url, {
+    Map<String, String>? headers,
+    Object? body,
+    Encoding? encoding,
+  }) {
     final request = ApiRequest(method.value, url);
+
+    if (headers != null) request.headers.addAll(headers);
+
+    if (encoding != null) request.encoding = encoding;
+    if (body != null) {
+      if (body is String) {
+        request.body = body;
+      } else if (body is List) {
+        request.bodyBytes = body.cast<int>();
+      } else if (body is Map) {
+        request.bodyFields = body.cast<String, String>();
+      } else {
+        throw ArgumentError('Invalid request body "$body".');
+      }
+    }
+    return request;
+  }
+
+  Future<ApiResponse> _send(
+    ApiMethod method,
+    Uri url,
+    Map<String, String>? headers, {
+    FormData? formData,
+    Object? body,
+    Encoding? encoding,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+    OnProgressCallback? onUploadProgress,
+  }) async {
+    final request = formData != null
+        ? _createMultipartRequest(
+            method,
+            url,
+            formData,
+            headers: headers,
+            onUploadProgress: onUploadProgress,
+          )
+        : _createApiRequest(method, url,
+            headers: headers, encoding: encoding, body: body);
 
     if (options != null) {
       request.options = options;
     }
 
     request.cancelToken = cancelToken?.token;
-
-    setRequestBody(request, headers, body, encoding);
 
     late ApiResponse res;
     try {
@@ -238,42 +309,7 @@ class _SingleRequestClient extends Client {
 
     return res;
   }
-
-  void setRequestBody(ApiRequest request, Map<String, String>? headers,
-      [Object? body, Encoding? encoding]) {
-    if (headers != null) request.headers.addAll(headers);
-    if (encoding != null) request.encoding = encoding;
-
-    if (body != null) {
-      if (body is String) {
-        request.body = body;
-      } else if (body is List) {
-        request.bodyBytes = body.cast<int>();
-      } else if (body is Map) {
-        request.bodyFields = body.cast<String, String>();
-      } else {
-        throw ArgumentError('Invalid request body "$body".');
-      }
-    }
-  }
 }
-
-class RetryConfig {
-  final Duration retryTimeout;
-  final int retries;
-  final WhenException? retryWhenException;
-  final WhenResponseStatus? retryWhenStatus;
-
-  const RetryConfig({
-    required this.retryTimeout,
-    required this.retries,
-    this.retryWhenException,
-    this.retryWhenStatus,
-  });
-}
-
-typedef WhenException = bool Function(RequestException);
-typedef WhenResponseStatus = bool Function(int);
 
 class _RetryClient extends _SingleRequestClient {
   final RetryConfig config;
@@ -291,6 +327,8 @@ class _RetryClient extends _SingleRequestClient {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    FormData? formData,
+    OnProgressCallback? onUploadProgress,
   }) async {
     print("sending with retrying");
     ApiRequest? request;
@@ -399,7 +437,8 @@ class _RetryClient extends _SingleRequestClient {
     ConnectionOption? options,
   }) {
     if (old == null) {
-      final request = ApiRequest(method.value, url);
+      final request = _createApiRequest(method, url,
+          headers: headers, encoding: encoding, body: body);
 
       if (options != null) {
         request.options = options;
@@ -407,7 +446,6 @@ class _RetryClient extends _SingleRequestClient {
 
       request.cancelToken = _retryToken?.token;
 
-      setRequestBody(request, headers, body, encoding);
       return request;
     } else {
       return ApiRequest(old.method, old.url)

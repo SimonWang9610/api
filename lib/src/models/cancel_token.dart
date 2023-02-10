@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:developer';
+
+import 'package:meta/meta.dart';
 
 abstract class CancelToken {
   final Completer _completer;
@@ -12,6 +13,7 @@ abstract class CancelToken {
     token.whenComplete(() => cancel(null));
   }
 
+  @mustCallSuper
   void start() {
     if (_started) return;
     _started = true;
@@ -19,6 +21,7 @@ abstract class CancelToken {
     // print("$runtimeType $hashCode has started its [Timer].");
   }
 
+  @mustCallSuper
   void cancel(dynamic signal) {
     _cancelTimer();
     if (_completer.isCompleted || !_started) return;
@@ -34,7 +37,7 @@ abstract class CancelToken {
     }
   }
 
-  Timer? _createTokenTimer();
+  Timer? _createTokenTimer() => null;
 
   Future get token => _completer.future;
 

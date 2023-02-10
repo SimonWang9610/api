@@ -56,6 +56,22 @@ class ContentTypeHelper {
     }
   }
 
+  void replace(Map<String, String> headers, String header) {
+    bool replaced = false;
+
+    for (final field in constants) {
+      if (headers.containsKey(field)) {
+        headers[field] = header;
+        replaced = true;
+        break;
+      }
+    }
+
+    if (!replaced) {
+      headers[constants.first] = header;
+    }
+  }
+
   Encoding getEncoding(MediaType? type, Encoding defaultEncoding) {
     if (type == null || !type.parameters.containsKey(charSet)) {
       return defaultEncoding;

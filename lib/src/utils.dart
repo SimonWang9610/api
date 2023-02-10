@@ -48,6 +48,12 @@ Encoding encodingForCharset(String? charset, [Encoding fallback = latin1]) {
   return Encoding.getByName(charset) ?? fallback;
 }
 
+final _asciiOnly = RegExp(r'^[\x00-\x7F]+$');
+
+/// Returns whether [string] is composed entirely of ASCII-compatible
+/// characters.
+bool isPlainAscii(String string) => _asciiOnly.hasMatch(string);
+
 RequestException assureRequestException(Object e) {
   if (e is RequestException) {
     return e;

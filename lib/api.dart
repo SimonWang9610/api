@@ -4,12 +4,14 @@
 library api;
 
 export 'src/client_base.dart';
+export 'src/method_enum.dart';
 
 export 'src/methods.dart';
-export 'src/models/cancel_token.dart';
-export 'src/models/error.dart';
+export 'src/models/models.dart';
 
-export 'src/models/connection_option.dart';
+export 'src/multipart/form_data.dart';
+export 'src/multipart/multipart_file.dart';
+
 export 'src/request/api_request.dart';
 export 'src/request/base_request.dart';
 export 'src/request/content_type_helper.dart';

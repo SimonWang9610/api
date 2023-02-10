@@ -6,12 +6,20 @@ class ApiRequest extends BaseRequest with ContentTypeMixin, RequestBodyMixin {
   ApiRequest(String method, Uri url) : super(method, url);
 
   @override
-  ByteStream finalize() {
+  ProgressedBytesStream finalize() {
     super.finalize();
-    return Stream.value(bodyBytes);
+    return ProgressedBytesStream(
+      contentLength,
+      Stream.value(bodyBytes),
+      shouldReportUploadProgress: shouldReportUploadProgress,
+    );
   }
 
   @override
   set contentLength(int? value) => throw UnsupportedError(
       'Cannot set the contentLength property for [ApiRequest].');
+
+  @override
+  set onProgressCallback(OnProgressCallback? callback) =>
+      UnsupportedError('Cannot set [OnProgressCallback] for [ApiRequest].');
 }

@@ -26,8 +26,7 @@ class IoClientAdapter extends HttpClientAdapter {
 
     final connectedRequest = await _connectWithTimeout(httpClient, request);
 
-    await _sendingWithTimeout(connectedRequest, dataStream,
-        request.options.validSendTimeout ? request.sendTimeout : null);
+    await _sendingWithTimeout(connectedRequest, dataStream, request);
 
     int receiveStart = DateTime.now().millisecondsSinceEpoch;
 
@@ -159,21 +158,22 @@ class IoClientAdapter extends HttpClientAdapter {
     return connectedRequest;
   }
 
-  Future<void> _sendingWithTimeout(
-      HttpClientRequest request, ByteStream dataStream,
-      [Duration? sendTimeout]) async {
+  Future<void> _sendingWithTimeout(HttpClientRequest clientRequest,
+      ProgressedBytesStream dataStream, BaseRequest request) async {
     try {
-      Future sending = request.addStream(dataStream);
-      if (sendTimeout != null) {
-        sending = sending.timeout(sendTimeout);
+      Future sending = clientRequest.addStream(dataStream.progressingUpload());
+
+      if (request.options.validSendTimeout) {
+        sending = sending.timeout(request.sendTimeout!);
       }
 
       await sending;
     } on TimeoutException {
-      request.abort();
+      clientRequest.abort();
       throw RequestException(
         type: ErrorType.sendTimeout,
-        message: "Sending timed out in ${sendTimeout?.inMilliseconds}ms",
+        message:
+            "Sending timed out in ${request.sendTimeout?.inMilliseconds}ms",
       );
     } catch (e) {
       _throwOtherException(e);
