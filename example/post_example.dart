@@ -20,7 +20,7 @@ Future<void> _post() async {
 
   final data = {
     "hello": "api",
-    "delay": 2000,
+    // "delay": 2000,
     "list": [100],
   };
 
@@ -28,7 +28,7 @@ Future<void> _post() async {
     final res = await Api.post(
       url,
       headers: {
-        "accept": "application/json",
+        // "accept": "application/json",
         "content-type": "application/json",
       },
       // cancelToken: TimingToken(Duration(seconds: 2)),
@@ -62,7 +62,7 @@ Future<void> _retryPost() async {
         "content-type": "application/json",
       },
       body: json.encode(data),
-      cancelToken: TimingToken(Duration(seconds: 5)),
+      // cancelToken: TimingToken(Duration(seconds: 5)),
       options: ConnectionOption(
         connectionTimeout: Duration(seconds: 1),
         sendTimeout: Duration(seconds: 1),

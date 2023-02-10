@@ -44,15 +44,15 @@ Future<void> _retryGet([int? delayMs]) async {
   try {
     final res = await Api.get(
       url,
-      headers: {"accept": "application/json"},
-      cancelToken: TimingToken(Duration(seconds: 3)),
+      // headers: {"accept": "application/json"},
+      // cancelToken: TimingToken(Duration(seconds: 3)),
       options: ConnectionOption(
         connectionTimeout: Duration(seconds: 1),
         sendTimeout: Duration(seconds: 1),
         // receiveTimeout: Duration(seconds: 2),
       ),
       retryConfig: RetryConfig(
-        retryTimeout: Duration(seconds: 2),
+        retryTimeout: Duration(seconds: 5),
         retries: 3,
         // retryWhenException: (e) => e.type != ErrorType.other,
         // retryWhenStatus: (code) => code >= 300,
