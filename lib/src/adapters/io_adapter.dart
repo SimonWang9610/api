@@ -132,7 +132,7 @@ class IoClientAdapter extends HttpClientAdapter {
           client.openUrl(request.method, request.url);
 
       if (request.options.validConnectionTimeout) {
-        connecting.timeout(request.connectionTimeout!);
+        connecting = connecting.timeout(request.connectionTimeout!);
       }
 
       connectedRequest = await connecting;
