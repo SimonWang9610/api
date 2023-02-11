@@ -283,3 +283,4 @@ The above ways can work together.
 3. support download
 4. throw error more explicitly
 5. document
+6. enable logging

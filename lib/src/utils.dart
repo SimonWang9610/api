@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
@@ -74,3 +75,5 @@ ApiError assureApiError(Object e) {
     );
   }
 }
+
+void warningLog(String message) => log("WARNING: $message");

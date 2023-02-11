@@ -1,6 +1,7 @@
 import 'package:http_parser/http_parser.dart';
 
 import 'multipart_file.dart';
+import '../utils.dart';
 
 class FormData {
   final Map<String, String> _fields = {};
@@ -53,7 +54,13 @@ class FormData {
 
   void addFields(Map<String, String> values) => _fields.addAll(values);
 
-  void addFile(MultipartFile file) => _files.add(file);
+  void addFile(MultipartFile file) {
+    if (file.filename == null) {
+      warningLog(
+          "No [filename] provided for [$file]. It may lead your server to ignore the binary file data. Try to set a [filename] as much as possible unless you deliberately do that.");
+    }
+    _files.add(file);
+  }
 
   void addFileFromBytes(List<int> bytes,
       {required String field, String? filename, MediaType? contentType}) {
