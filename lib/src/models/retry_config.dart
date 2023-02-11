@@ -14,5 +14,5 @@ class RetryConfig {
   });
 }
 
-typedef WhenException = bool Function(RequestException);
+typedef WhenException = bool Function(ApiError);
 typedef WhenResponseStatus = bool Function(int);

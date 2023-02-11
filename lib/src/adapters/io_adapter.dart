@@ -17,10 +17,11 @@ class IoClientAdapter extends HttpClientAdapter {
   bool _closed = false;
 
   @override
-  Future<ResponseBody> fetch(request) async {
+  Future<ResponseBody> fetch(request, [cancelToken]) async {
     _checkClosed();
 
     final dataStream = request.finalize();
+    cancelToken?.start();
 
     final httpClient = _createHttpClient(request.options, request.cancelToken);
 
@@ -49,7 +50,7 @@ class IoClientAdapter extends HttpClientAdapter {
               current - start > timeoutInMs &&
               request.options.validReceiveTimeout) {
             sink.addError(
-              RequestException(
+              ApiError(
                 type: ErrorType.receiveTimeout,
                 message: "Receiving timed out in $timeoutInMs ms",
                 method: request.method,
@@ -170,7 +171,7 @@ class IoClientAdapter extends HttpClientAdapter {
       await sending;
     } on TimeoutException {
       clientRequest.abort();
-      throw RequestException(
+      throw ApiError(
         type: ErrorType.sendTimeout,
         message:
             "Sending timed out in ${request.sendTimeout?.inMilliseconds}ms",
@@ -201,7 +202,7 @@ class IoClientAdapter extends HttpClientAdapter {
       //! otherwise, the application may be stuck
       client.close(force: true);
 
-      throw RequestException(
+      throw ApiError(
         type: ErrorType.receiveTimeout,
         message: "Timed out in ${request.receiveTimeout?.inMilliseconds}",
         method: request.method,
@@ -221,7 +222,7 @@ class IoClientAdapter extends HttpClientAdapter {
   }
 
   void _throwConnectingTimeout(Duration? connectionTimeout) {
-    throw RequestException(
+    throw ApiError(
       type: ErrorType.connectionTimeout,
       message: "Timed out in $connectionTimeout",
     );
@@ -229,12 +230,12 @@ class IoClientAdapter extends HttpClientAdapter {
 
   void _throwOtherException(Object e) {
     if (e is HttpException) {
-      throw RequestException(
+      throw ApiError(
         type: ErrorType.cancel,
         message: "$e",
       );
     } else {
-      throw RequestException(
+      throw ApiError(
         type: ErrorType.other,
         message: "$e",
       );

@@ -11,13 +11,13 @@ enum ErrorType {
   const ErrorType(this.message);
 }
 
-class RequestException implements Exception {
+class ApiError implements Exception {
   final ErrorType type;
   final String? message;
   final String? method;
   final String? url;
 
-  RequestException({
+  ApiError({
     this.method,
     this.url,
     this.type = ErrorType.other,
@@ -26,6 +26,6 @@ class RequestException implements Exception {
 
   @override
   String toString() {
-    return "RequestException(type: $type, message: $message, method: $method, url: $url)";
+    return "ApiError(type: $type, message: $message, method: $method, url: $url)";
   }
 }

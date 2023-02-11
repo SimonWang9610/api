@@ -23,8 +23,9 @@ class BrowserAdapter extends HttpClientAdapter {
   BrowserAdapter(this.withCredentials);
 
   @override
-  Future<ResponseBody> fetch(request) async {
+  Future<ResponseBody> fetch(request, [cancelToken]) async {
     final dataStream = request.finalize();
+    cancelToken?.start();
 
     final wrapper = _createHttpRequest(request);
 
@@ -109,6 +110,8 @@ class BrowserAdapter extends HttpClientAdapter {
 typedef ProgressEventHandler = void Function(ProgressEvent);
 typedef ReadStateEventHandler = void Function(Event);
 
+/// store all [StreamSubscription] for [HttpRequest]
+/// so that release all subscriptions when the request is fulfilled/aborted
 class _HttpRequestWrapper {
   final HttpRequest xhr;
   final ConnectionOption option;
@@ -139,7 +142,7 @@ class _HttpRequestWrapper {
           final connected = xhr.readyState >= HttpRequest.OPENED;
           if (!(connected || completer.isCompleted)) {
             completer.completeError(
-              RequestException(
+              ApiError(
                   type: ErrorType.connectionTimeout,
                   message:
                       'Connecting timed out in ${option.connectionTimeout!.inMilliseconds}ms'),
@@ -153,14 +156,18 @@ class _HttpRequestWrapper {
 
   /// when the ready state of xhr becomes [HttpRequest.OPENED], start timing [option.sendTimeout]
   /// this method should be invoked when the ready state of xhr is changing
+  /// [option.sendTimeout] is validated successfully when
+  /// 1) receiving is not starting ([_receiveStart] == null)
+  /// 2) [completer] has not been completed which means either a [ResponseBody] is returned or other [ApiError]s is returned
+  /// 3) the read state of xhr is still not changed to [HttpRequest.HEADERS_RECEIVED]
   void registerSendingTimeout(Completer<ResponseBody> completer) {
     if (xhr.readyState == HttpRequest.OPENED && option.validSendTimeout) {
       Future.delayed(option.sendTimeout!, () {
         if (_receiveStart == null &&
             !completer.isCompleted &&
-            xhr.readyState < HttpRequest.LOADING) {
+            xhr.readyState < HttpRequest.HEADERS_RECEIVED) {
           completer.completeError(
-            RequestException(
+            ApiError(
               type: ErrorType.sendTimeout,
               message:
                   'Sending timed out in ${option.sendTimeout!.inMilliseconds}ms]',
@@ -172,7 +179,8 @@ class _HttpRequestWrapper {
     }
   }
 
-  /// when loading start, mark the [_receiveStart] timestamp and timing [option.receiveTimeout]
+  /// when loading start, mark the [_receiveStart] timestamp and start timing [option.receiveTimeout]
+  /// if [completer] is not completed with either a [ResponseBody] or another [ApiError]
   void registerReceivingTimeout(Completer<ResponseBody> completer) {
     final sub = xhr.onLoadStart.listen(
       (_) {
@@ -184,7 +192,7 @@ class _HttpRequestWrapper {
             () {
               if (!completer.isCompleted) {
                 completer.completeError(
-                  RequestException(
+                  ApiError(
                     type: ErrorType.receiveTimeout,
                     message:
                         'Receiving timed out in ${option.receiveTimeout!.inMilliseconds}ms',
@@ -203,12 +211,13 @@ class _HttpRequestWrapper {
   }
 
   /// cancel this request if the result has not been completed
+  /// TODO: investigate possible issues if aborting this request brutely
   void registerCancelToken(Completer<ResponseBody> completer) async {
     if (cancelToken != null) {
       cancelToken!.whenComplete(() {
         if (!completer.isCompleted) {
           completer.completeError(
-            RequestException(
+            ApiError(
               type: ErrorType.cancel,
               message: 'Request is canceled',
             ),
@@ -249,7 +258,7 @@ class _HttpRequestWrapper {
     final sub = xhr.onError.listen((event) {
       if (!completer.isCompleted) {
         completer.completeError(
-          RequestException(
+          ApiError(
             type: ErrorType.other,
             message: "XMLHttpRequest error",
           ),

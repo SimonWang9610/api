@@ -16,29 +16,30 @@ import 'content_type_helper.dart';
 
 final _newlineRegExp = RegExp(r'\r\n|\r|\n');
 
-/// A `multipart/form-data` request.
+/// The finalized String output of [MultipartRequest] would follow this format
+/// content-length: [length]
+/// content-type: multipart/form-data; boundary=[_generateBoundaryString]
+/// --[_generateBoundaryString]
+/// <header area> for one field of [fields]
 ///
-/// Such a request has both string [fields], which function as normal form
-/// fields, and (potentially streamed) binary [files].
+/// <field value>
+/// --[_generateBoundaryString]
+/// <header area> for one field of [fields]
 ///
-/// This request automatically sets the Content-Type header to
-/// `multipart/form-data`. This value will override any value set by the user.
+/// <field value>
+/// <...>
+/// --[_generateBoundaryString]
+/// <header area> for one file of [files]
 ///
-///     var uri = Uri.https('example.com', 'create');
-///     var request = http.MultipartRequest('POST', uri)
-///       ..fields['user'] = 'nweiz@google.com'
-///       ..files.add(await http.MultipartFile.fromPath(
-///           'package', 'build/package.tar.gz',
-///           contentType: MediaType('application', 'x-tar')));
-///     var response = await request.send();
-///     if (response.statusCode == 200) print('Uploaded!');
+/// <file data>
 class MultipartRequest extends BaseRequest {
   /// The total length of the multipart boundaries used when building the
   /// request body.
   ///
-  /// According to http://tools.ietf.org/html/rfc1341.html, this can't be longer
-  /// than 70.
-  static const int _boundaryLength = 70;
+  /// According to https://www.rfc-editor.org/rfc/rfc2046#section-5.1.1, it should be in [1, 70]
+  static const int _boundaryLength = 30;
+  static const String _boundaryPrefix = "simple-api-";
+  static const String _endOfLine = "\r\n";
 
   static final Random _random = Random();
 
@@ -63,29 +64,33 @@ class MultipartRequest extends BaseRequest {
   /// This is calculated from [fields] and [files] and cannot be set manually.
   @override
   int get contentLength {
-    var length = 0;
+    int length = 0;
 
-    final endOfLineLength = "\r\n".length;
-
-    fields.forEach((name, value) {
-      length += '--'.length +
-          _boundaryLength +
-          endOfLineLength +
-          _convertToBytes(_headerForField(name, value)).length +
-          _convertToBytes(value).length +
-          endOfLineLength;
-    });
+    fields.forEach(
+      (name, value) {
+        length += '--'.length +
+            _boundaryLength +
+            _endOfLine.length +
+            _convertToBytes(_headerForField(name, value)).length +
+            _convertToBytes(value).length +
+            _endOfLine.length;
+      },
+    );
 
     for (var file in files) {
       length += '--'.length +
           _boundaryLength +
-          endOfLineLength +
+          _endOfLine.length +
           _convertToBytes(_headerForFile(file)).length +
           file.length +
-          endOfLineLength;
+          _endOfLine.length;
     }
 
-    return length + '--'.length + _boundaryLength + '--\r\n'.length;
+    return length +
+        '--'.length +
+        _boundaryLength +
+        '--'.length +
+        _endOfLine.length;
   }
 
   @override
@@ -94,12 +99,12 @@ class MultipartRequest extends BaseRequest {
         'multipart requests.');
   }
 
-  /// Freezes all mutable fields and returns a single-subscription [ByteStream]
-  /// that will emit the request body.
+  /// According to https://www.rfc-editor.org/rfc/rfc7578#section-4.3, `multipart/mixed` has been deprecated
+  /// multiple files MUST be sent by supplying each file in a separate part but all with the same
+  /// "name" parameter.
   @override
   ProgressedBytesStream finalize() {
-    // TODO: freeze fields and files
-    final boundary = _boundaryString();
+    final boundary = _generateBoundaryString();
 
     ContentTypeHelper()
         .replace(headers, 'multipart/form-data; boundary=$boundary');
@@ -114,24 +119,23 @@ class MultipartRequest extends BaseRequest {
   }
 
   Stream<Uint8List> _finalize(String boundary) async* {
-    const line = [13, 10]; // \r\n
-    final separator = _convertToBytes('--$boundary\r\n');
-    final close = _convertToBytes('--$boundary--\r\n');
+    final separator = _convertToBytes('--$boundary$_endOfLine');
+    final endOfLineBytes = Uint8List.fromList([13, 10]);
 
     for (var field in fields.entries) {
       yield separator;
       yield _convertToBytes(_headerForField(field.key, field.value));
       yield _convertToBytes(field.value);
-      yield Uint8List.fromList(line);
+      yield endOfLineBytes;
     }
 
     for (final file in files) {
       yield separator;
       yield _convertToBytes(_headerForFile(file));
       yield* file.finalize();
-      yield Uint8List.fromList(line);
+      yield endOfLineBytes;
     }
-    yield close;
+    yield _convertToBytes('--$boundary--$_endOfLine');
   }
 
   Uint8List _convertToBytes(String string) =>
@@ -140,28 +144,29 @@ class MultipartRequest extends BaseRequest {
   /// Returns the header string for a field.
   ///
   /// The return value is guaranteed to contain only ASCII characters.
-  String _headerForField(String name, String value) {
-    var header =
-        'content-disposition: form-data; name="${_browserEncode(name)}"';
+  String _headerForField(String key, String value) {
+    String header =
+        'content-disposition: form-data; name="${_browserEncode(key)}"';
+
     if (!isPlainAscii(value)) {
-      header = '$header\r\n'
-          'content-type: text/plain; charset=utf-8\r\n'
+      header = '$header$_endOfLine'
+          'content-type: text/plain; charset=utf-8$_endOfLine'
           'content-transfer-encoding: binary';
     }
-    return '$header\r\n\r\n';
+    return '$header$_endOfLine$_endOfLine';
   }
 
   /// Returns the header string for a file.
   ///
   /// The return value is guaranteed to contain only ASCII characters.
   String _headerForFile(MultipartFile file) {
-    var header = 'content-type: ${file.contentType}\r\n'
+    var header = 'content-type: ${file.contentType}$_endOfLine'
         'content-disposition: form-data; name="${_browserEncode(file.field)}"';
 
     if (file.filename != null) {
       header = '$header; filename="${_browserEncode(file.filename!)}"';
     }
-    return '$header\r\n\r\n';
+    return '$header$_endOfLine$_endOfLine';
   }
 
   /// Encode [value] in the same way browsers do.
@@ -174,14 +179,13 @@ class MultipartRequest extends BaseRequest {
       value.replaceAll(_newlineRegExp, '%0D%0A').replaceAll('"', '%22');
 
   /// Returns a randomly-generated multipart boundary string
-  String _boundaryString() {
-    var prefix = 'dart-http-boundary-';
-    var list = List<int>.generate(
-        _boundaryLength - prefix.length,
+  String _generateBoundaryString() {
+    final list = List<int>.generate(
+        _boundaryLength - _boundaryPrefix.length,
         (index) =>
             boundaryCharacters[_random.nextInt(boundaryCharacters.length)],
         growable: false);
-    return '$prefix${String.fromCharCodes(list)}';
+    return '$_boundaryPrefix${String.fromCharCodes(list)}';
   }
 }
 

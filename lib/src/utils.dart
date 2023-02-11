@@ -1,6 +1,9 @@
 import 'dart:typed_data';
 import 'dart:convert';
 
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
+
 import 'models/error.dart';
 
 /// Converts [input] into a [Uint8List].
@@ -54,11 +57,18 @@ final _asciiOnly = RegExp(r'^[\x00-\x7F]+$');
 /// characters.
 bool isPlainAscii(String string) => _asciiOnly.hasMatch(string);
 
-RequestException assureRequestException(Object e) {
-  if (e is RequestException) {
+/// infer the [MediaType] from the [filename]
+MediaType? getMediaTypeFromFilename(String? filename) {
+  String? mime = filename != null ? lookupMimeType(filename) : null;
+
+  return mime != null ? MediaType.parse(mime) : null;
+}
+
+ApiError assureApiError(Object e) {
+  if (e is ApiError) {
     return e;
   } else {
-    return RequestException(
+    return ApiError(
       type: ErrorType.other,
       message: "$e",
     );

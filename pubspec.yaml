@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   http_parser: ^4.0.2
+  mime: ^1.0.4
 
 dev_dependencies:
   lints: ^2.0.0

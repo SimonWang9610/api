@@ -4,13 +4,13 @@ import 'response/api_response.dart';
 import 'models/models.dart';
 import 'multipart/form_data.dart';
 import 'method_enum.dart';
-import 'client_base.dart';
+import 'client.dart';
 
 typedef ApiMethodWrapper = Future<ApiResponse> Function(Client);
 
 Future<ApiResponse> _withApi(ApiMethodWrapper fn,
-    [RetryConfig? retryConfig]) async {
-  final api = Client(retryConfig);
+    {RetryConfig? retryConfig, bool forUpload = false}) async {
+  final api = forUpload ? Client.multipart() : Client.single(retryConfig);
 
   try {
     return await fn(api);
@@ -34,7 +34,7 @@ class Api {
           cancelToken: cancelToken,
           options: options,
         ),
-        retryConfig,
+        retryConfig: retryConfig,
       );
 
   static Future<ApiResponse> head(
@@ -51,7 +51,7 @@ class Api {
           cancelToken: cancelToken,
           options: options,
         ),
-        retryConfig,
+        retryConfig: retryConfig,
       );
 
   static Future<ApiResponse> post(
@@ -72,7 +72,7 @@ class Api {
           cancelToken: cancelToken,
           options: options,
         ),
-        retryConfig,
+        retryConfig: retryConfig,
       );
 
   static Future<ApiResponse> put(
@@ -93,7 +93,7 @@ class Api {
           cancelToken: cancelToken,
           options: options,
         ),
-        retryConfig,
+        retryConfig: retryConfig,
       );
 
   static Future<ApiResponse> patch(
@@ -114,7 +114,7 @@ class Api {
           cancelToken: cancelToken,
           options: options,
         ),
-        retryConfig,
+        retryConfig: retryConfig,
       );
 
   static Future<ApiResponse> delete(
@@ -135,7 +135,7 @@ class Api {
           cancelToken: cancelToken,
           options: options,
         ),
-        retryConfig,
+        retryConfig: retryConfig,
       );
 
   static Future<ApiResponse> upload(
@@ -150,11 +150,13 @@ class Api {
       _withApi(
         (api) => api.upload(
           url,
+          method: method,
           formData,
           headers: headers,
           cancelToken: cancelToken,
           options: options,
           onUploadProgress: onUploadProgress,
         ),
+        forUpload: true,
       );
 }

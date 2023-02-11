@@ -13,22 +13,18 @@ import 'multipart_stub.dart' if (dart.library.io) "multipart_io.dart";
 import '../models/byte_stream.dart';
 import '../utils.dart';
 
-/// A file to be uploaded as part of a [MultipartRequest].
+/// [field] indicates the key for this file
+/// [length] must be know in advance
 ///
-/// This doesn't need to correspond to a physical file.
+/// [filename] and [contentType]
+///
+/// 1) provide [filename] as soon as possible so that the server-side could decode the binary data into the original file correctly
+/// 2) if not [MediaType] is specified for this file, [contentType] would be inferred from [filename].
+///   if none of them is applied, [contentType] would default to `application/octet-stream`
+///
 class MultipartFile {
-  /// The name of the form field for the file.
   final String field;
-
-  /// The size of the file in bytes.
-  ///
-  /// This must be known in advance, even if this file is created from a
-  /// [ByteStream].
   final int length;
-
-  /// The basename of the file.
-  ///
-  /// May be `null`.
   final String? filename;
 
   /// The content-type of the file.
@@ -39,31 +35,26 @@ class MultipartFile {
   /// The stream that will emit the file's contents.
   final ByteStream _stream;
 
-  /// Whether [finalize] has been called.
   bool get isFinalized => _isFinalized;
   bool _isFinalized = false;
 
-  /// Creates a new [MultipartFile] from a chunked [Stream] of bytes.
-  ///
-  /// The length of the file in bytes must be known in advance. If it's not,
-  /// read the data from the stream and use [MultipartFile.fromBytes] instead.
-  ///
-  /// [contentType] currently defaults to `application/octet-stream`, but in the
-  /// future may be inferred from [filename].
   MultipartFile(this.field, Stream<List<int>> stream, this.length,
       {this.filename, MediaType? contentType})
       : _stream = stream.cast<Uint8List>(),
-        contentType = contentType ?? MediaType('application', 'octet-stream');
+        contentType = contentType ??
+            getMediaTypeFromFilename(filename) ??
+            MediaType('application', 'octet-stream');
 
-  /// Creates a new [MultipartFile] from a byte array.
-  ///
-  /// [contentType] currently defaults to `application/octet-stream`, but in the
-  /// future may be inferred from [filename].
   factory MultipartFile.fromBytes(String field, List<int> value,
       {String? filename, MediaType? contentType}) {
-    var stream = Stream.value(value);
-    return MultipartFile(field, stream, value.length,
-        filename: filename, contentType: contentType);
+    final stream = Stream.value(value);
+    return MultipartFile(
+      field,
+      stream,
+      value.length,
+      filename: filename,
+      contentType: contentType,
+    );
   }
 
   /// Creates a new [MultipartFile] from a string.
@@ -82,15 +73,6 @@ class MultipartFile {
         filename: filename, contentType: contentType);
   }
 
-  // TODO(nweiz): Infer the content-type from the filename.
-  /// Creates a new [MultipartFile] from a path to a file on disk.
-  ///
-  /// [filename] defaults to the basename of [filePath]. [contentType] currently
-  /// defaults to `application/octet-stream`, but in the future may be inferred
-  /// from [filename].
-  ///
-  /// Throws an [UnsupportedError] if `dart:io` isn't supported in this
-  /// environment.
   static Future<MultipartFile> fromPath(String field, String filePath,
           {String? filename, MediaType? contentType}) =>
       multipartFileFromPath(field, filePath,
@@ -105,5 +87,10 @@ class MultipartFile {
     }
     _isFinalized = true;
     return _stream;
+  }
+
+  @override
+  String toString() {
+    return "MultipartFile(name: $filename, type: $contentType, length: $length)";
   }
 }

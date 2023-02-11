@@ -11,16 +11,14 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
-This library allows users to create different API requests (e.g., get, post, put, delete, patch) by referring to [http](https://pub.dev/packages/http) and [dio](https://pub.dev/packages/dio).
-
-If you want to call remote APIs simply and do not need too many fancy features, you should try this package. Welcome to contribute and report any issue.
+This lib extends the official [http](https://pub.dev/packages/http) package, and minify core functions of [dio](https://pub.dev/packages/dio) package. It is out of box package, so that you could create get/post/put/patch/delete/head requests and upload files easily and avoid importing redundant functions.
 
 ## Features
 
-1. Compared to `http` and `dio`, this library is very small and provide a different way to retry quest.
+1. Request retry.
    It allows you to retry a request by setting a `Duration`. If the previous request does not return an acceptable response during `Duration`, it would be aborted and start the next request.
-2. support canceling a request at any time
-3. support `onUploadProgress`
+2. Request cancellation. Cancellation can work together with request retrying.
+3. File upload. Currently, it only support `onUploadProgress` callback during uploading
 4. out of box, see examples
 
 ## Usage
@@ -228,7 +226,7 @@ Future<void> _uploadMulti() async {
 
 ## Create a request
 
-> Users must use try-catch to catch `RequestException` in case that no expected `ApiResponse` is returned (e.g., the request is aborted/timed out/, or the response is not as users expected)
+> Users must use try-catch to catch `ApiError` in case that no expected `ApiResponse` is returned (e.g., the request is aborted/timed out/, or the response is not as users expected)
 
 1. Need to specify the `content-type` field in the headers. If not, it will fallback to different media types:
 
@@ -280,7 +278,8 @@ The above ways can work together.
 
 ## TODO
 
-1. test upload on web
-2. test put/patch/delete/head
-3. unit tests
-4. support download
+1. test put/patch/delete/head
+2. unit tests
+3. support download
+4. throw error more explicitly
+5. document

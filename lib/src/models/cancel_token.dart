@@ -28,6 +28,10 @@ abstract class CancelToken {
     _completer.complete(signal);
   }
 
+  void expire() {
+    cancel(null);
+  }
+
   void _cancelTimer() {
     if (_timer != null) {
       // print(
@@ -79,6 +83,12 @@ class RetryToken extends CancelToken {
     return Timer(duration, () {
       cancel(count);
     });
+  }
+
+  @override
+  void expire() {
+    mainToken?.expire();
+    super.expire();
   }
 
   /// its [Future] token should always be the fast one
