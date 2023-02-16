@@ -29,12 +29,12 @@ Future<void> _uploadSingle(String path) async {
   try {
     final res = await Api.upload(
       url, formData,
-      cancelToken: TimingToken(Duration(seconds: 3)),
+      // cancelToken: TimingToken(Duration(milliseconds: 100)),
       // headers: {
       //   "content-type": "application/json",
       // },
-      // onUploadProgress: (sent, total) =>
-      //     print("total: $total, sent: $sent, percent: ${sent / total}"),
+      onUploadProgress: (sent, total) =>
+          print("total: $total, sent: $sent, percent: ${sent / total}"),
     );
     print(res);
   } catch (e) {
