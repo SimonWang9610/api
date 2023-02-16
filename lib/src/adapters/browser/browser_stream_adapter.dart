@@ -111,7 +111,6 @@ class BrowserStreamAdapter extends HttpClientAdapter
 
 class _EventSourceRequest extends BrowserRequestWrapper {
   int _loaded = 0;
-  int? _receiveStart;
 
   _EventSourceRequest(
     super.xhr, {

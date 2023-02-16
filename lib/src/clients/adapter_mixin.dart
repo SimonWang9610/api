@@ -32,6 +32,7 @@ mixin HttpAdapterManager {
       _adapter.fetch(request, cancelToken);
 
   void sendStreamRequest(
-          BaseRequest request, StreamController<ResponseChunk> controller) =>
-      _adapter.fetchStream(request, controller);
+          BaseRequest request, StreamController<ResponseChunk> controller,
+          [CancelToken? cancelToken]) =>
+      _adapter.fetchStream(request, controller, cancelToken);
 }

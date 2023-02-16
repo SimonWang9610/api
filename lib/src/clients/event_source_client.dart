@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:meta/meta.dart';
 
+import '../models/cancel_token.dart';
 import '../request/api_request.dart';
 import '../response/response_chunk.dart';
 import '../method_enum.dart';
@@ -18,21 +19,23 @@ class EventSourceClient with HttpAdapterManager {
     Uri url, {
     Map<String, String>? headers,
     Object? body,
+    CancelToken? cancelToken,
   }) {
     final request =
         createApiRequest(ApiMethod.post, url, headers: headers, body: body);
 
-    sendStreamRequest(request, _controller);
+    sendStreamRequest(request, _controller, cancelToken);
     return _controller.stream;
   }
 
   Stream<ResponseChunk> get(
     Uri url, {
     Map<String, String>? headers,
+    CancelToken? cancelToken,
   }) {
     final request = createApiRequest(ApiMethod.post, url, headers: headers);
 
-    sendStreamRequest(request, _controller);
+    sendStreamRequest(request, _controller, cancelToken);
     return _controller.stream;
   }
 
@@ -60,5 +63,13 @@ class EventSourceClient with HttpAdapterManager {
       }
     }
     return request;
+  }
+
+  @override
+  void close({bool force = false}) {
+    if (!_controller.isClosed) {
+      _controller.close();
+    }
+    super.close(force: force);
   }
 }

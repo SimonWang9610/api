@@ -4,8 +4,7 @@ import 'package:api/api.dart';
 void main() async {
   final headers = {
     "Content-Type": "application/json",
-    "Authorization":
-        "Bearer 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",
+    "Authorization": "Bearer <token>",
   };
 
   final url = Uri.parse("https://api.openai.com/v1/completions");
@@ -20,12 +19,14 @@ void main() async {
   final eventSource = EventSource(url, ApiMethod.post);
   eventSource.setHeaders(headers);
 
-  final stream = eventSource.send(json.encode(data));
+  final cancelToken = TimingToken(Duration(seconds: 2));
+  final stream = eventSource.send(json.encode(data), cancelToken);
 
   stream.listen(
     (event) {
       print(event.chunk);
     },
     onError: (err) => print(err),
+    onDone: eventSource.close,
   );
 }
