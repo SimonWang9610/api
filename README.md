@@ -233,7 +233,8 @@ It currently has some limitations:
 
 1. It only supports `get/post` method
 2. For `EventSource` in this package, some `ConnectionOption` may not work, which requiring more tests
-3. on the web, the `XMLHttpRequest.responseType` is hard coded as `text` for behaving closely as `EventSource`. Besides, due to `XMLHttpRequest.responseText` is incremental, so I have to extract a chunk data like below:
+3. For mobile, the `ResponseChunk.chunk` defaults to use `utf8.decode` to convert to `String`. In future, it may should expose the bytes to users directly.
+4. on the web, the `XMLHttpRequest.responseType` is hard coded as `text` for behaving closely as `EventSource`. Besides, due to `XMLHttpRequest.responseText` is incremental, so I have to extract a chunk data like below:
 
 ```dart
       final chunk = xhr.responseText!.substring(_loaded);
