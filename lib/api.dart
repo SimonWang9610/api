@@ -5,6 +5,7 @@ library api;
 
 export 'src/client.dart';
 export 'src/methods.dart';
+export 'src/event_source.dart';
 export 'src/method_enum.dart';
 
 export 'src/methods.dart';

@@ -224,6 +224,76 @@ Future<void> _uploadMulti() async {
 }
 ```
 
+### receive request data as stream
+
+> it is very similar to `EventSource` but it is not an implementation of standard `EventSource` [HTML Spec](https://html.spec.whatwg.org/multipage/server-sent-events.html#server-sent-events)
+> By using `EventSource` in this package, you could receive the response data as stream directly, instead of `await`ing like as `Future`
+
+It currently has some limitations:
+
+1. It only supports `get/post` method
+2. For `EventSource` in this package, some `ConnectionOption` may not work, which requiring more tests
+3. on the web, the `XMLHttpRequest.responseType` is hard coded as `text` for behaving closely as `EventSource`. Besides, due to `XMLHttpRequest.responseText` is incremental, so I have to extract a chunk data like below:
+
+```dart
+      final chunk = xhr.responseText!.substring(_loaded);
+
+      _loaded = xhr.responseText!.length;
+
+      final chunkResponse = ResponseChunk(
+        request: request,
+        chunk: chunk,
+        statusCode: xhr.status!,
+        headers: xhr.responseHeaders,
+        isRedirect: xhr.status == 301 || xhr.status == 302,
+        statusMessage: xhr.statusText,
+      );
+
+      if (!controller.isClosed) {
+        controller.add(chunkResponse);
+      }
+```
+
+Consequently, it might overwhelm the memory when the incoming data is very large
+
+The below is an example to call ChatGPT API and receive its streamed response data;
+
+```dart
+import 'dart:convert';
+import 'package:api/api.dart';
+
+void main() async {
+  final headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer <token>",
+  };
+
+  final url = Uri.parse("https://api.openai.com/v1/completions");
+
+  final data = {
+    "model": "text-davinci-003",
+    "prompt": "give 5 words",
+    "max_tokens": 256,
+    "stream": true,
+  };
+
+  final eventSource = EventSource(url, ApiMethod.post);
+  eventSource.setHeaders(headers);
+
+  final cancelToken = TimingToken(Duration(seconds: 2));
+  final stream = eventSource.send(json.encode(data), cancelToken);
+
+  stream.listen(
+    (event) {
+      print(event.chunk);
+    },
+    onError: (err) => print(err),
+    onDone: eventSource.close,
+  );
+}
+
+```
+
 ## Create a request
 
 > Users must use try-catch to catch `ApiError` in case that no expected `ApiResponse` is returned (e.g., the request is aborted/timed out/, or the response is not as users expected)
