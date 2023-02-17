@@ -41,6 +41,7 @@ class IoClientAdapter extends HttpClientAdapter with IoAdapterMixin {
         } else {
           _throwOtherException(e);
         }
+        return false;
       },
     );
 
@@ -59,6 +60,7 @@ class IoClientAdapter extends HttpClientAdapter with IoAdapterMixin {
         } else {
           _throwOtherException(e);
         }
+        return false;
       },
     );
 
@@ -79,6 +81,7 @@ class IoClientAdapter extends HttpClientAdapter with IoAdapterMixin {
         } else {
           _throwOtherException(e);
         }
+        return false;
       },
     );
 

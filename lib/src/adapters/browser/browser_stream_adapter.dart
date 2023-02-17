@@ -9,6 +9,15 @@ import '../../models/error.dart';
 import '../../utils.dart';
 import 'browser_request_wrapper.dart';
 
+bool _closeWithError(StreamController<BaseChunk> controller, Object e) {
+  if (!controller.isClosed) {
+    controller.addError(assureApiError(e));
+    controller.close();
+    return true;
+  }
+  return false;
+}
+
 class BrowserStreamAdapter extends HttpClientAdapter
     with RequestWrapperManagement<_EventSourceRequest> {
   static const String responseType = "text";
@@ -28,36 +37,26 @@ class BrowserStreamAdapter extends HttpClientAdapter
     eventSource.listenLoadEnd(responseStream);
     eventSource.listenError(responseStream);
 
-    eventSource.registerCancelToken(() {
-      if (!responseStream.isClosed) {
-        responseStream.addError(
-          ApiError(
-            type: ErrorType.cancel,
-            message: 'Request is canceled',
-          ),
-        );
-        responseStream.close();
+    eventSource.registerCancelToken(
+      () => _closeWithError(
+        responseStream,
+        ApiError(
+          type: ErrorType.cancel,
+          message: 'Request is canceled',
+        ),
+      ),
+    );
 
-        return true;
-      }
-      return false;
-    });
-
-    eventSource.registerReceivingTimeout(() {
-      if (!responseStream.isClosed) {
-        responseStream.addError(
-          ApiError(
-            type: ErrorType.receiveTimeout,
-            message:
-                'Receiving timed out in ${request.receiveTimeout!.inMilliseconds}ms',
-          ),
-          StackTrace.current,
-        );
-        responseStream.close();
-        return true;
-      }
-      return false;
-    });
+    eventSource.registerReceivingTimeout(
+      () => _closeWithError(
+        responseStream,
+        ApiError(
+          type: ErrorType.receiveTimeout,
+          message:
+              'Receiving timed out in ${request.receiveTimeout!.inMilliseconds}ms',
+        ),
+      ),
+    );
 
     eventSource.registerConnectingTimeout(() {
       final connected = eventSource.xhr.readyState >= HttpRequest.OPENED;
@@ -77,18 +76,14 @@ class BrowserStreamAdapter extends HttpClientAdapter
 
     // todo: registerSendingTimeout & onUploadProgress
 
-    try {
-      final data = await dataStream.toBytes();
-      eventSource.send(data);
-    } catch (e) {
-      if (!responseStream.isClosed) {
-        responseStream.addError(assureApiError(e));
-        responseStream.close();
-      }
-    } finally {
+    final data = await dataStream.toBytes();
+    eventSource.send(data);
+
+    //! when [responseStream] is closed, it indicates this request is either completed or aborted
+    responseStream.done.whenComplete(() {
       eventSource.clear();
       remove(eventSource);
-    }
+    });
   }
 
   @override
@@ -155,18 +150,15 @@ class _EventSourceRequest extends BrowserRequestWrapper {
   }
 
   void listenError(StreamController<BaseChunk> controller) {
-    final sub = xhr.onError.listen((event) {
-      if (!controller.isClosed) {
-        controller.addError(
-          ApiError(
-            type: ErrorType.other,
-            message: "XMLHttpRequest error",
-          ),
-          StackTrace.current,
-        );
-        controller.close();
-      }
-    });
+    final sub = xhr.onError.listen(
+      (event) => _closeWithError(
+        controller,
+        ApiError(
+          type: ErrorType.other,
+          message: "XMLHttpRequest error",
+        ),
+      ),
+    );
     addSubscription(sub);
   }
 }

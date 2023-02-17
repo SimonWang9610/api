@@ -6,7 +6,7 @@ import '../../models/connection_option.dart';
 import '../../models/byte_stream.dart';
 import '../../request/base_request.dart';
 
-typedef ExceptionCallback = void Function(Object);
+typedef ExceptionCallback = bool Function(Object);
 
 typedef CancelCallback = void Function(HttpClient);
 
@@ -73,13 +73,15 @@ mixin IoAdapterMixin on HttpClientAdapter {
       }
 
       connectedRequest = await connecting;
-
-      request.headers.forEach((key, value) {
-        connectedRequest.headers.set(key, value);
-      });
     } catch (e) {
-      onException(e);
+      if (onException(e)) {
+        rethrow;
+      }
     }
+
+    request.headers.forEach((key, value) {
+      connectedRequest.headers.set(key, value);
+    });
 
     connectedRequest.followRedirects = request.followRedirects;
     connectedRequest.maxRedirects = request.maxRedirects;
@@ -104,7 +106,9 @@ mixin IoAdapterMixin on HttpClientAdapter {
 
       await sending;
     } catch (e) {
-      onException(e);
+      if (onException(e)) {
+        rethrow;
+      }
     }
   }
 
@@ -124,7 +128,9 @@ mixin IoAdapterMixin on HttpClientAdapter {
       }
       streamedResponse = await closing;
     } catch (e) {
-      onException(e);
+      if (onException(e)) {
+        rethrow;
+      }
     }
 
     return streamedResponse;
