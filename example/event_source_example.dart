@@ -17,12 +17,13 @@ void main() async {
     "stream": true,
   };
 
-  final eventSource = EventSource(url, ApiMethod.post);
+  final eventSource = EventSource(url, ApiMethod.get);
   eventSource.setHeaders(headers);
 
-  final cancelToken = TimingToken(Duration(seconds: 2));
+  final cancelToken = TimingToken(Duration(seconds: 5));
   final stream =
       eventSource.send(body: json.encode(data), cancelToken: cancelToken);
+  // final stream = eventSource.send(cancelToken: cancelToken);
 
   stream.listen(
     (event) {
