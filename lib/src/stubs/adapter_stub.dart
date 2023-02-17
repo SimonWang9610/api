@@ -1,4 +1,4 @@
-import 'http_client_adapter.dart';
+import '../http_client_adapter.dart';
 
 HttpClientAdapter createAdapter(
         {bool withCredentials = false, bool asStream = false}) =>

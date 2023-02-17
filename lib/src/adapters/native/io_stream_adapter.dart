@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import '../../response/response_chunk.dart';
@@ -115,9 +114,9 @@ class IoStreamAdapter extends HttpClientAdapter with IoAdapterMixin {
           responseStream.close();
           httpClient.close(force: true);
         } else if (!responseStream.isClosed) {
-          final chunkResponse = ResponseChunk(
+          final chunkResponse = IoChunk(
+            data,
             request: request,
-            chunk: utf8.decode(data),
             statusCode: streamedResponse.statusCode,
             headers: headers,
             isRedirect: streamedResponse.isRedirect ||
@@ -147,7 +146,7 @@ class IoStreamAdapter extends HttpClientAdapter with IoAdapterMixin {
     );
   }
 
-  void _closeWithConnectTimeout(StreamController<ResponseChunk> controller,
+  void _closeWithConnectTimeout(StreamController<BaseChunk> controller,
       [Duration? connectionTimeout]) {
     if (!controller.isClosed) {
       controller.addError(ApiError(
@@ -158,8 +157,7 @@ class IoStreamAdapter extends HttpClientAdapter with IoAdapterMixin {
     }
   }
 
-  void _closeWithOtherError(
-      StreamController<ResponseChunk> controller, Object e) {
+  void _closeWithOtherError(StreamController<BaseChunk> controller, Object e) {
     if (!controller.isClosed) {
       controller.addError(assureApiError(e));
       controller.close();

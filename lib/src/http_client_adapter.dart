@@ -10,7 +10,7 @@ abstract class HttpClientAdapter {
       throw UnimplementedError("[$runtimeType client not support fetch");
 
   void fetchStream(
-          BaseRequest request, StreamController<ResponseChunk> responseStream,
+          BaseRequest request, StreamController<BaseChunk> responseStream,
           [CancelToken? cancelToken]) =>
       throw UnimplementedError("[$runtimeType client not support fetchStream");
 

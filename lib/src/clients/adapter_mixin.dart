@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:meta/meta.dart';
 
-import '../adapter_stub.dart'
+import '../stubs/adapter_stub.dart'
 // ignore: uri_does_not_exist
     if (dart.library.html) '../adapters/browser_stub_entry.dart'
 // ignore: uri_does_not_exist
@@ -32,7 +32,7 @@ mixin HttpAdapterManager {
       _adapter.fetch(request, cancelToken);
 
   void sendStreamRequest(
-          BaseRequest request, StreamController<ResponseChunk> controller,
+          BaseRequest request, StreamController<BaseChunk> controller,
           [CancelToken? cancelToken]) =>
       _adapter.fetchStream(request, controller, cancelToken);
 }

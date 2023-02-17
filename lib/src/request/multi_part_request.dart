@@ -102,8 +102,8 @@ class MultipartRequest extends BaseRequest {
   ProgressedBytesStream finalize() {
     final boundary = _generateBoundaryString();
 
-    ContentTypeHelper()
-        .replace(headers, 'multipart/form-data; boundary=$boundary');
+    ContentTypeHelper.replace(
+        headers, 'multipart/form-data; boundary=$boundary');
     super.finalize();
 
     return ProgressedBytesStream(

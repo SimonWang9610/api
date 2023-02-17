@@ -19,7 +19,8 @@ This lib extends the official [http](https://pub.dev/packages/http) package, and
    It allows you to retry a request by setting a `Duration`. If the previous request does not return an acceptable response during `Duration`, it would be aborted and start the next request.
 2. Request cancellation. Cancellation can work together with request retrying.
 3. File upload. Currently, it only support `onUploadProgress` callback during uploading
-4. out of box, see examples
+4. Support piping the response data as stream
+5. out of box, see examples
 
 ## Usage
 
@@ -233,7 +234,7 @@ It currently has some limitations:
 
 1. It only supports `get/post` method
 2. For `EventSource` in this package, some `ConnectionOption` may not work, which requiring more tests
-3. For mobile, the `ResponseChunk.chunk` defaults to use `utf8.decode` to convert to `String`. In future, it may should expose the bytes to users directly.
+3. For web, the stream would emit `WebChunk` whose `chunk` property is `String`, otherwise the stream would emit `IoChunk` whose `chunk` property is `List<int>`. Therefore, users should cast the `BaseChunk` into their desired subtypes of `BaseChunk` on different platforms, e.g., (io/web)
 4. on the web, the `XMLHttpRequest.responseType` is hard coded as `text` for behaving closely as `EventSource`. Besides, due to `XMLHttpRequest.responseText` is incremental, so I have to extract a chunk data like below:
 
 ```dart
@@ -282,11 +283,18 @@ void main() async {
   eventSource.setHeaders(headers);
 
   final cancelToken = TimingToken(Duration(seconds: 2));
-  final stream = eventSource.send(json.encode(data), cancelToken);
+  final stream =
+      eventSource.send(body: json.encode(data), cancelToken: cancelToken);
 
   stream.listen(
     (event) {
-      print(event.chunk);
+      if (eventSource.isWeb) {
+        print(event.chunk as String);
+      } else {
+        final encoding = event.getEncoding();
+
+        print(encoding.decode(event.chunk as List<int>));
+      }
     },
     onError: (err) => print(err),
     onDone: eventSource.close,

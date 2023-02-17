@@ -46,6 +46,7 @@ abstract class BaseRequest
             equals: (key1, key2) => key1.toLowerCase() == key2.toLowerCase(),
             hashCode: (key) => key.toLowerCase().hashCode);
 
+  @override
   int? get contentLength => _contentLength;
   int? _contentLength;
 
@@ -130,16 +131,16 @@ mixin ConnectionMixin on _FinalizedCheckable {
 mixin ContentTypeMixin on _FinalizedCheckable {
   Map<String, String> get headers;
 
-  MediaType? get _contentType => ContentTypeHelper().getMediaType(headers);
+  MediaType? get _contentType => ContentTypeHelper.getMediaType(headers);
 
   set _contentType(MediaType? value) {
-    ContentTypeHelper().change(value, headers);
+    ContentTypeHelper.change(value, headers);
   }
 
   Encoding _defaultEncoding = utf8;
 
   Encoding get encoding =>
-      ContentTypeHelper().getEncoding(_contentType, _defaultEncoding);
+      ContentTypeHelper.getEncoding(_contentType, _defaultEncoding);
 
   set encoding(Encoding value) {
     _checkFinalized();

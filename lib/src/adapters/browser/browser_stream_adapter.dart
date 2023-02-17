@@ -121,15 +121,15 @@ class _EventSourceRequest extends BrowserRequestWrapper {
   /// [HttpRequest.responseText] is incremental instead of part data
   ///! consequently, if the data sent is large, it might overwhelm memory
   void listenProgressData(
-      BaseRequest request, StreamController<ResponseChunk> controller) {
+      BaseRequest request, StreamController<BaseChunk> controller) {
     final sub = xhr.onProgress.listen((event) {
       final chunk = xhr.responseText!.substring(_loaded);
 
       _loaded = xhr.responseText!.length;
 
-      final chunkResponse = ResponseChunk(
+      final chunkResponse = WebChunk(
+        chunk,
         request: request,
-        chunk: chunk,
         statusCode: xhr.status!,
         headers: xhr.responseHeaders,
         isRedirect: xhr.status == 301 || xhr.status == 302,
@@ -144,7 +144,7 @@ class _EventSourceRequest extends BrowserRequestWrapper {
     addSubscription(sub);
   }
 
-  void listenLoadEnd(StreamController<ResponseChunk> controller) {
+  void listenLoadEnd(StreamController<BaseChunk> controller) {
     final sub = xhr.onLoadEnd.listen((event) {
       if (!controller.isClosed) {
         controller.close();
@@ -154,7 +154,7 @@ class _EventSourceRequest extends BrowserRequestWrapper {
     addSubscription(sub);
   }
 
-  void listenError(StreamController<ResponseChunk> controller) {
+  void listenError(StreamController<BaseChunk> controller) {
     final sub = xhr.onError.listen((event) {
       if (!controller.isClosed) {
         controller.addError(

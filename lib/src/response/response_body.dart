@@ -36,5 +36,5 @@ class ResponseBody {
 
   String toJson() => json.encode(toMap());
 
-  Encoding get encoding => ContentTypeHelper().getEncodingFromHeaders(headers);
+  Encoding get encoding => ContentTypeHelper.getEncodingFromHeaders(headers);
 }

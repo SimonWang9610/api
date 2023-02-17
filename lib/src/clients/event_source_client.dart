@@ -13,9 +13,9 @@ class EventSourceClient with HttpAdapterManager {
   @override
   bool get asStream => true;
 
-  final StreamController<ResponseChunk> _controller = StreamController();
+  final StreamController<BaseChunk> _controller = StreamController();
 
-  Stream<ResponseChunk> post(
+  Stream<BaseChunk> post(
     Uri url, {
     Map<String, String>? headers,
     Object? body,
@@ -28,7 +28,7 @@ class EventSourceClient with HttpAdapterManager {
     return _controller.stream;
   }
 
-  Stream<ResponseChunk> get(
+  Stream<BaseChunk> get(
     Uri url, {
     Map<String, String>? headers,
     CancelToken? cancelToken,

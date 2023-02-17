@@ -19,3 +19,4 @@ export 'src/request/multi_part_request.dart';
 export 'src/request/content_type_helper.dart';
 
 export 'src/response/api_response.dart';
+export 'src/response/response_chunk.dart';

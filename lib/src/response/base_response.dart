@@ -17,7 +17,7 @@ abstract class BaseResponse {
 
   final bool persistentConnection;
 
-  BaseResponse({
+  const BaseResponse({
     required this.isRedirect,
     required this.statusCode,
     required this.headers,
@@ -27,5 +27,5 @@ abstract class BaseResponse {
     this.request,
   });
 
-  Encoding get encoding => ContentTypeHelper().getEncodingFromHeaders(headers);
+  Encoding get encoding => ContentTypeHelper.getEncodingFromHeaders(headers);
 }

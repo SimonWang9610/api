@@ -54,7 +54,7 @@ Future<void> _retryGet([int? delayMs]) async {
       retryConfig: RetryConfig(
         retryTimeout: Duration(seconds: 5),
         retries: 3,
-        // retryWhenException: (e) => e.type != ErrorType.other,
+        retryWhenException: (e) => e.type != ErrorType.other,
         retryWhenStatus: (code) => code >= 300,
       ),
     );

@@ -12,14 +12,9 @@ class ContentTypeHelper {
   ];
 
   static const charSet = "charset";
+  static const eventSource = "text/event-stream";
 
-  const ContentTypeHelper._();
-
-  static const _instance = ContentTypeHelper._();
-
-  factory ContentTypeHelper() => _instance;
-
-  MediaType? getMediaType(Map<String, String> headers) {
+  static MediaType? getMediaType(Map<String, String> headers) {
     String? contentType;
 
     for (final type in constants) {
@@ -34,7 +29,7 @@ class ContentTypeHelper {
     }
   }
 
-  void change(MediaType? newType, Map<String, String> headers) {
+  static void change(MediaType? newType, Map<String, String> headers) {
     if (newType == null) {
       for (final type in constants) {
         headers.remove(type);
@@ -56,7 +51,7 @@ class ContentTypeHelper {
     }
   }
 
-  void replace(Map<String, String> headers, String header) {
+  static void replace(Map<String, String> headers, String header) {
     bool replaced = false;
 
     for (final field in constants) {
@@ -72,7 +67,7 @@ class ContentTypeHelper {
     }
   }
 
-  Encoding getEncoding(MediaType? type, Encoding defaultEncoding) {
+  static Encoding getEncoding(MediaType? type, Encoding defaultEncoding) {
     if (type == null || !type.parameters.containsKey(charSet)) {
       return defaultEncoding;
     } else {
@@ -80,7 +75,7 @@ class ContentTypeHelper {
     }
   }
 
-  Encoding getEncodingFromHeaders(Map<String, String> headers) {
+  static Encoding getEncodingFromHeaders(Map<String, String> headers) {
     final mediaType =
         getMediaType(headers) ?? MediaType("application", 'octet-stream');
     return getEncoding(mediaType, latin1);

@@ -20,11 +20,18 @@ void main() async {
   eventSource.setHeaders(headers);
 
   final cancelToken = TimingToken(Duration(seconds: 2));
-  final stream = eventSource.send(json.encode(data), cancelToken);
+  final stream =
+      eventSource.send(body: json.encode(data), cancelToken: cancelToken);
 
   stream.listen(
     (event) {
-      print(event.chunk);
+      if (eventSource.isWeb) {
+        print(event.chunk as String);
+      } else {
+        final encoding = event.getEncoding();
+
+        print(encoding.decode(event.chunk as List<int>));
+      }
     },
     onError: (err) => print(err),
     onDone: eventSource.close,
