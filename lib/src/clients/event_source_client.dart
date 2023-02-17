@@ -33,7 +33,7 @@ class EventSourceClient with HttpAdapterManager {
     Map<String, String>? headers,
     CancelToken? cancelToken,
   }) {
-    final request = createApiRequest(ApiMethod.post, url, headers: headers);
+    final request = createApiRequest(ApiMethod.get, url, headers: headers);
 
     sendStreamRequest(request, _controller, cancelToken);
     return _controller.stream;
