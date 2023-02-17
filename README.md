@@ -242,9 +242,9 @@ It currently has some limitations:
 
       _loaded = xhr.responseText!.length;
 
-      final chunkResponse = ResponseChunk(
+      final chunkResponse = WebChunk(
+        chunk,
         request: request,
-        chunk: chunk,
         statusCode: xhr.status!,
         headers: xhr.responseHeaders,
         isRedirect: xhr.status == 301 || xhr.status == 302,
@@ -259,6 +259,8 @@ It currently has some limitations:
 Consequently, it might overwhelm the memory when the incoming data is very large
 
 The below is an example to call ChatGPT API and receive its streamed response data;
+
+> Remember to invoke `EventSource.close` to release all resources hold by http connections
 
 ```dart
 import 'dart:convert';
@@ -354,6 +356,27 @@ Users have two ways to stop retrying:
 The above ways can work together.
 
 > Note: `RetryConfig.retryInterval` means the next request would be created and abort the previous one if no response is returned from the previous one between `retryInterval`, instead of waiting `retryInterval` after the previous request return a response.
+
+## Investigation
+
+- which way is better to release resources when receiving timed out?
+
+1. `client.close(force: true);`
+2.
+
+```dart
+            response
+                .detachSocket()
+                .then((socket) => socket.destroy())
+                .catchError(
+              (err) {
+                print("error on detaching socket: $err");
+              },
+              test: (error) => true,
+            );
+```
+
+- Is there any potential issue to brutely invoke `XMLHttpRequest.abort()` for any kind of timeouts validate successfully?
 
 ## TODO
 

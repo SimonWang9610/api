@@ -49,7 +49,7 @@ Future<void> _retryGet([int? delayMs]) async {
       options: ConnectionOption(
         connectionTimeout: Duration(seconds: 1),
         sendTimeout: Duration(seconds: 1),
-        // receiveTimeout: Duration(seconds: 2),
+        receiveTimeout: Duration(seconds: 2),
       ),
       retryConfig: RetryConfig(
         retryTimeout: Duration(seconds: 5),

@@ -109,9 +109,19 @@ class IoClientAdapter extends HttpClientAdapter with IoAdapterMixin {
               ),
               StackTrace.current,
             );
+            sink.close();
+
             // ! error on finding the connection associated with the response
             // ! if we try to detach its socket
-            // response.detachSocket().then((socket) => socket.destroy());
+            // response
+            //     .detachSocket()
+            //     .then((socket) => socket.destroy())
+            //     .catchError(
+            //   (err) {
+            //     print("error on detaching socket: $err");
+            //   },
+            //   test: (error) => true,
+            // );
             client.close(force: true);
           } else {
             sink.add(Uint8List.fromList(data));
