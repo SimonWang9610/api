@@ -12,10 +12,16 @@ import '../request/base_request.dart';
 import '../models/cancel_token.dart';
 import '../http_client_adapter.dart';
 
+/// all [Client] should mixin [HttpAdapterManager] so as to use [sendRequest] and [sendStreamRequest]
 mixin HttpAdapterManager {
+  /// if true, [sendStreamRequest] would be used, and the response data would be streamed when data chunk is arrived
+  /// otherwise, [sendRequest] would be used, and the response data would not be returned until all data chunks are collected
   bool get asStream => false;
   bool get withCredentials => false;
 
+  /// create [HttpClientAdapter], avoiding exposing the underlying implementations
+  /// so that [Client] could focus on constructing [BaseRequest] and then submitting request to [_adapter]
+  /// by invoking [sendRequest] or [sendStreamRequest]
   late final HttpClientAdapter _adapter =
       createAdapter(withCredentials: withCredentials, asStream: asStream);
 

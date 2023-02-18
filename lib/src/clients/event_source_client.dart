@@ -8,6 +8,10 @@ import '../method_enum.dart';
 
 import 'adapter_mixin.dart';
 
+/// used to receive response data and stream them to users when each data chunk is received
+/// once [ApiError] is added into [_controller], the stream would be closed.
+/// no matter the error is reported either by the underlying platforms or due to the validation of the [ConnectionOption]
+/// the associated request would be canceled/aborted
 class EventSourceClient with HttpAdapterManager {
   @override
   bool get asStream => true;

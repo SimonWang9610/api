@@ -2,6 +2,8 @@ import 'base_request.dart';
 
 import '../models/byte_stream.dart';
 
+/// once [finalize] is called, no further changes could be applied to this request
+/// [onUploadProgressCallback] currently is not supported by [ApiRequest]
 class ApiRequest extends BaseRequest with ContentTypeMixin, RequestBodyMixin {
   ApiRequest(String method, Uri url) : super(method, url);
 

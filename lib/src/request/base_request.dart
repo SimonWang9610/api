@@ -128,12 +128,21 @@ mixin ConnectionMixin on _FinalizedCheckable {
 mixin ContentTypeMixin on _FinalizedCheckable {
   Map<String, String> get headers;
 
+  /// [_contentType] would first try to be found in [headers]
+  /// if not found, it would default to text/plain
+  /// if found, its 'charset' parameter might be updated using [encoding]
   MediaType? get _contentType => ContentTypeHelper.getMediaType(headers);
 
   set _contentType(MediaType? value) {
     ContentTypeHelper.change(value, headers);
   }
 
+  /// [_defaultEncoding] could be set by the following rules:
+  /// 1) if [encoding] is set when creating [BaseRequest], [_defaultEncoding] would be set the specific [Encoding]
+  /// 2) if [encoding] is not set, [_defaultEncoding] would default to [utf8]
+  ///
+  /// the final effective [encoding] would be from the 'charset' parameter of [_contentType];
+  /// otherwise fallback to [_defaultEncoding]
   Encoding _defaultEncoding = utf8;
 
   Encoding get encoding =>
@@ -161,6 +170,8 @@ mixin RequestBodyMixin on _FinalizedCheckable, ContentTypeMixin {
     _bodyBytes = toUint8List(value);
   }
 
+  /// when setting [body] for [BaseRequest], [encoding] would first try to get [Encoding] from the request's [headers]
+  /// if the content-type header does not have 'charset' parameter, it will fallback to [_defaultEncoding]
   String get body => encoding.decode(bodyBytes);
   set body(String value) {
     bodyBytes = encoding.encode(value);
@@ -200,6 +211,7 @@ mixin RequestBodyMixin on _FinalizedCheckable, ContentTypeMixin {
 mixin StreamProgressMixin on _FinalizedCheckable {
   int? get contentLength;
 
+  /// currently, only [MultipartRequest] supports [onUploadProgressCallback]
   OnProgressCallback? _onUploadProgressCallback;
   OnProgressCallback? get onUploadProgressCallback => _onUploadProgressCallback;
   set onUploadProgressCallback(OnProgressCallback? callback) {

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:simple_http_api/simple_http_api.dart';
 

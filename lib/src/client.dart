@@ -9,6 +9,23 @@ import 'method_enum.dart';
 
 import 'clients/clients.dart';
 
+/// [CancelToken] and [ConnectionOption] would work together
+/// it would depend on which condition is validated successfully first.
+/// If [CancelToken] is validated successfully first, all [ConnectionOption] would not be validated any more
+/// if [ConnectionOption] is validated successfully first, [CancelToken] would not be validated any more
+///
+/// no matter which one is validated successfully, the corresponding exception would be thrown
+///
+/// 1) How [CancelToken] is validated?
+/// if no response is returned or no exception is thrown in [CancelToken.duration],
+/// [CancelToken] is validated and then [CancelToken.cancel] is invoked to cancel the request.
+/// a final [ApiError] with [ErrorType.cancel] would be thrown
+///
+/// 2) How [ConnectionOption] is validated?
+/// - if the connection is not established in [ConnectionOption.connectionTimeout], throw [ErrorType.connectionTimeout]
+/// - if the request data is not sent completely in [ConnectionOption.sendTimeout], throw [ErrorType.sendTimeout]
+/// - if the response data is not received completely in [ConnectionOption.receiveTimeout], throw [ErrorType.receiveTimeout]
+/// once the [ApiError] is thrown, the request would be aborted
 abstract class Client {
   Client();
 
