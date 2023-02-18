@@ -1,4 +1,4 @@
-name: api
+name: extended_http
 description: A starting point for Dart libraries or applications.
 version: 1.0.0
 # homepage: https://www.example.com
@@ -9,6 +9,8 @@ environment:
 dependencies:
   http_parser: ^4.0.2
   mime: ^1.0.4
+  meta: ^1.9.0
+  path: ^1.8.3
 
 dev_dependencies:
   lints: ^2.0.0

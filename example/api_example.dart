@@ -1,3 +1,3 @@
-import 'package:api/api.dart';
+import 'package:extended_http/extended_http.dart';
 
 void main() {}
