@@ -4,8 +4,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
-// ignore: depend_on_referenced_packages
-import 'package:meta/meta.dart';
 
 import '../models/byte_stream.dart';
 import '../utils.dart';
@@ -58,7 +56,6 @@ abstract class BaseRequest
     _contentLength = value;
   }
 
-  @mustCallSuper
   ProgressedBytesStream finalize() {
     _finalize();
     return ProgressedBytesStream.empty();
@@ -199,6 +196,7 @@ mixin RequestBodyMixin on _FinalizedCheckable, ContentTypeMixin {
   }
 }
 
+// ignore: library_private_types_in_public_api
 mixin StreamProgressMixin on _FinalizedCheckable {
   int? get contentLength;
 

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:meta/meta.dart';
 
 import '../models/models.dart';
 import '../multipart/form_data.dart';
@@ -32,8 +31,6 @@ class MultipartClient extends Client with HttpAdapterManager {
         onUploadProgress: onUploadProgress,
       );
 
-  @internal
-  @protected
   Future<ApiResponse> create(
     ApiMethod method,
     Uri url,

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:meta/meta.dart';
 
 import '../models/models.dart';
 import '../request/api_request.dart';

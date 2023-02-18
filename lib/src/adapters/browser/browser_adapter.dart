@@ -111,6 +111,7 @@ class BrowserAdapter extends HttpClientAdapter
   }
 
   @override
+  // ignore: library_private_types_in_public_api
   _HttpRequestWrapper createHttpRequestWrapper(BaseRequest request) {
     final wrapper = _HttpRequestWrapper(
       HttpRequest()

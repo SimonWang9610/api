@@ -87,6 +87,7 @@ class BrowserStreamAdapter extends HttpClientAdapter
   }
 
   @override
+  // ignore: library_private_types_in_public_api
   _EventSourceRequest createHttpRequestWrapper(BaseRequest request) {
     final xhr = HttpRequest()
       ..open(request.method, "${request.url}")

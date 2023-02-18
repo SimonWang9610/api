@@ -1,6 +1,3 @@
-import 'package:meta/meta.dart';
-
-@immutable
 class ConnectionOption {
   final Duration? sendTimeout;
   final Duration? connectionTimeout;

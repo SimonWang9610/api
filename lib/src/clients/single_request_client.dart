@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:meta/meta.dart';
 
 import '../models/models.dart';
 import '../request/api_request.dart';
@@ -120,8 +119,6 @@ class SingleRequestClient extends Client with HttpAdapterManager {
         options: options,
       );
 
-  @internal
-  @protected
   ApiRequest createApiRequest(
     ApiMethod method,
     Uri url, {
@@ -148,8 +145,6 @@ class SingleRequestClient extends Client with HttpAdapterManager {
     return request;
   }
 
-  @internal
-  @protected
   Future<ApiResponse> create(
     ApiMethod method,
     Uri url,

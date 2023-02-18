@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:meta/meta.dart';
-
 import '../stubs/adapter_stub.dart'
 // ignore: uri_does_not_exist
     if (dart.library.html) '../adapters/browser_stub_entry.dart'
@@ -25,8 +23,6 @@ mixin HttpAdapterManager {
     _adapter.close(force: force);
   }
 
-  @internal
-  @protected
   Future<ResponseBody> sendRequest(BaseRequest request,
           [CancelToken? cancelToken]) =>
       _adapter.fetch(request, cancelToken);

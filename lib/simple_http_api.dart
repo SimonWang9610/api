@@ -8,7 +8,6 @@ export 'src/methods.dart';
 export 'src/event_source.dart';
 export 'src/method_enum.dart';
 
-export 'src/methods.dart';
 export 'src/models/models.dart';
 
 export 'src/multipart/form_data.dart';

@@ -20,6 +20,6 @@ class ApiRequest extends BaseRequest with ContentTypeMixin, RequestBodyMixin {
       'Cannot set the contentLength property for [ApiRequest].');
 
   @override
-  set onProgressCallback(OnProgressCallback? callback) =>
+  set onUploadProgressCallback(OnProgressCallback? callback) =>
       UnsupportedError('Cannot set [OnProgressCallback] for [ApiRequest].');
 }
