@@ -1,7 +1,12 @@
-name: api
-description: A starting point for Dart libraries or applications.
+name: simple_http_api
+description:
+  A package extends the official http package with the features of cancellation, timeout and EventSource.
+  No complicated concepts and redundant functions, just API requests.
+homepage: https://github.com/SimonWang9610/api
+repository: https://github.com/SimonWang9610/api
+issue_tracker: https://github.com/SimonWang9610/api/issues
+
 version: 1.0.0
-# homepage: https://www.example.com
 
 environment:
   sdk: ">=2.18.4 <3.0.0"
@@ -9,6 +14,8 @@ environment:
 dependencies:
   http_parser: ^4.0.2
   mime: ^1.0.4
+  meta: ^1.9.0
+  path: ^1.8.3
 
 dev_dependencies:
   lints: ^2.0.0

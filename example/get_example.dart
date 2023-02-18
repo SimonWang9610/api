@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:api/api.dart';
+import 'package:simple_http_api/simple_http_api.dart';
 
 void main() async {
   int timestamp = 0;

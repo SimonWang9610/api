@@ -1,7 +1,7 @@
 /// Support for doing something awesome.
 ///
 /// More dartdocs go here.
-library api;
+library simple_http_api;
 
 export 'src/client.dart';
 export 'src/methods.dart';

@@ -11,15 +11,15 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
-This lib extends the official [http](https://pub.dev/packages/http) package, and minify core functions of [dio](https://pub.dev/packages/dio) package. It is out of box package, so that you could create get/post/put/patch/delete/head requests and upload files easily and avoid importing redundant functions.
+This package extends the official [http](https://pub.dev/packages/http) package, and minify core functions of [dio](https://pub.dev/packages/dio) package. It is out of box package, so that you could create get/post/put/patch/delete/head requests and upload files easily and avoid importing redundant functions.
 
 ## Features
 
 1. Request retry.
    It allows you to retry a request by setting a `Duration`. If the previous request does not return an acceptable response during `Duration`, it would be aborted and start the next request.
 2. Request cancellation. Cancellation can work together with request retrying.
-3. File upload. Currently, it only support `onUploadProgress` callback during uploading
-4. Support piping the response data as stream
+3. File upload. Currently, it only support `onUploadProgress` callback during uploading. [example](#upload)
+4. Support piping the response data as stream. [example](#receive-request-data-as-stream)
 5. out of box, see examples
 
 ## Usage
@@ -27,7 +27,8 @@ This lib extends the official [http](https://pub.dev/packages/http) package, and
 ### get request
 
 ```dart
-import "package:api/api.dart";
+import 'package:simple_http_api/simple_http_api.dart';
+
 
 void _get() async {
     final url = Uri.parse("http://127.0.0.1:8080");
@@ -85,7 +86,9 @@ Future<void> _retryGet([int? delayMs]) async {
 
 ```dart
 import "dart:convert";
-import "package:api/api.dart";
+import 'package:simple_http_api/simple_http_api.dart';
+
+
 
 void _post_() async {
   final url = Uri.parse("http://127.0.0.1:8080");
@@ -163,7 +166,9 @@ Future<void> _retryPost() async {
 
 ```dart
 import 'dart:async';
-import 'package:api/api.dart';
+import 'package:simple_http_api/simple_http_api.dart';
+
+
 
 void main() async {
   await _uploadSingle("./assets/demo.mp4");
@@ -264,7 +269,9 @@ The below is an example to call ChatGPT API and receive its streamed response da
 
 ```dart
 import 'dart:convert';
-import 'package:api/api.dart';
+import 'package:simple_http_api/simple_http_api.dart';
+
+
 
 void main() async {
   final headers = {
