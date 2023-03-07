@@ -15,3 +15,8 @@ fix incompatible with dependencies of flutter from SDK
 
 - add documentations and `example/example.dart`
 - stable
+
+## 1.0.2
+
+- update README
+- remove dependency: `path`

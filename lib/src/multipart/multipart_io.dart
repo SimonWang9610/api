@@ -1,13 +1,14 @@
 import 'dart:io';
 
 import 'package:http_parser/http_parser.dart';
-import 'package:path/path.dart' as p;
 
 import 'multipart_file.dart';
 
 Future<MultipartFile> multipartFileFromPath(String field, String filePath,
     {String? filename, MediaType? contentType}) async {
-  filename ??= p.basename(filePath);
+  var segments = Uri.file(filePath).pathSegments;
+  filename = segments.isNotEmpty ? segments.last : "";
+
   var file = File(filePath);
   var length = await file.length();
   return MultipartFile(

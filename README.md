@@ -11,6 +11,9 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
+[![pub package](https://img.shields.io/pub/v/simple_http_api?color=blue&style=plastic)](https://pub.dev/packages/simple_http_api)
+[![GitHub Repo stars](https://img.shields.io/github/stars/SimonWang9610/api?color=black&logoColor=black&style=social)](https://github.com/SimonWang9610/api)
+
 This package extends the official [http](https://pub.dev/packages/http) package, and minify core functions of [dio](https://pub.dev/packages/dio) package. It is out of box package, so that you could create get/post/put/patch/delete/head requests and upload files easily and avoid importing redundant functions.
 
 ## Features
