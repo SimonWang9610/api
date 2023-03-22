@@ -5,6 +5,8 @@ import 'models/models.dart';
 import 'multipart/form_data.dart';
 import 'method_enum.dart';
 import 'client.dart';
+import 'parallel/parallel.dart';
+import 'parallel/converter.dart';
 
 typedef ApiMethodWrapper = Future<ApiResponse> Function(Client);
 
@@ -17,6 +19,16 @@ Future<ApiResponse> _withApi(ApiMethodWrapper fn,
   } finally {
     api.close();
   }
+}
+
+Future<ApiResponse> _isolateWrapper(
+    Future<ApiResponse> Function() apiExecutor) async {
+  return useIsolate<ApiResponse, String>(
+    "",
+    (_) => apiExecutor(),
+    toJson: apiResponseToJson,
+    fromJson: jsonToApiResponse,
+  );
 }
 
 class Api {
@@ -146,8 +158,25 @@ class Api {
     CancelToken? cancelToken,
     ConnectionOption? options,
     OnProgressCallback? onUploadProgress,
-  }) =>
-      _withApi(
+    bool useIsolate = false,
+  }) {
+    if (useIsolate) {
+      return _isolateWrapper(
+        () => _withApi(
+          (api) => api.upload(
+            url,
+            method: method,
+            formData,
+            headers: headers,
+            cancelToken: cancelToken,
+            options: options,
+            onUploadProgress: onUploadProgress,
+          ),
+          forUpload: true,
+        ),
+      );
+    } else {
+      return _withApi(
         (api) => api.upload(
           url,
           method: method,
@@ -159,4 +188,6 @@ class Api {
         ),
         forUpload: true,
       );
+    }
+  }
 }
