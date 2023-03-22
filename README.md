@@ -21,7 +21,7 @@ This package extends the official [http](https://pub.dev/packages/http) package,
 1. Request retry.
    It allows you to retry a request by setting a `Duration`. If the previous request does not return an acceptable response during `Duration`, it would be aborted and start the next request.
 2. Request cancellation. Cancellation can work together with request retrying.
-3. File upload. Currently, it only support `onUploadProgress` callback during uploading. [example](#upload)
+3. File upload in `Isolate`. Currently, it only support `onUploadProgress` callback during uploading. [example](#upload)
 4. Support piping the response data as stream. [example](#receive-request-data-as-stream)
 5. out of box, see examples
 
@@ -166,6 +166,7 @@ Future<void> _retryPost() async {
 
 > `FormData.fileFromPath` is not supported on web
 > retrying for uploading is disabled by default since this case is unusual
+> `useIsolate: true` would put the upload work into a separate `Isolate`. For web, `useIsolate` actually do nothing.
 
 ```dart
 import 'dart:async';
