@@ -1,3 +1,7 @@
+## 1.1.1
+
+- support the fallback encoding for `ApiResponse` when no valid encoding found in the headers of `ApiResponse`
+
 ## 1.1.0
 
 - support uploading files in a separate isolate. [pull request](https://github.com/SimonWang9610/api/pull/3)

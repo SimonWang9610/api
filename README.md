@@ -27,6 +27,8 @@ This package extends the official [http](https://pub.dev/packages/http) package,
 
 ## Usage
 
+> if no valid `Encoding` found in `ApiResponse.headers`, you could pass `responseEncoding` to specify the fallback `Encoding` when creating `get/post/delete` requests.
+
 ### get request
 
 ```dart
