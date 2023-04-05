@@ -38,6 +38,7 @@ class Api {
     CancelToken? cancelToken,
     ConnectionOption? options,
     RetryConfig? retryConfig,
+    Encoding? responseEncoding,
   }) =>
       _withApi(
         (api) => api.get(
@@ -45,6 +46,7 @@ class Api {
           headers: headers,
           cancelToken: cancelToken,
           options: options,
+          responseEncoding: responseEncoding,
         ),
         retryConfig: retryConfig,
       );
@@ -74,6 +76,7 @@ class Api {
     CancelToken? cancelToken,
     ConnectionOption? options,
     RetryConfig? retryConfig,
+    Encoding? responseEncoding,
   }) =>
       _withApi(
         (api) => api.post(
@@ -83,6 +86,7 @@ class Api {
           encoding: encoding,
           cancelToken: cancelToken,
           options: options,
+          responseEncoding: responseEncoding,
         ),
         retryConfig: retryConfig,
       );
@@ -95,6 +99,7 @@ class Api {
     CancelToken? cancelToken,
     ConnectionOption? options,
     RetryConfig? retryConfig,
+    Encoding? responseEncoding,
   }) =>
       _withApi(
         (api) => api.put(
@@ -104,6 +109,7 @@ class Api {
           encoding: encoding,
           cancelToken: cancelToken,
           options: options,
+          responseEncoding: responseEncoding,
         ),
         retryConfig: retryConfig,
       );
@@ -116,6 +122,7 @@ class Api {
     CancelToken? cancelToken,
     ConnectionOption? options,
     RetryConfig? retryConfig,
+    Encoding? responseEncoding,
   }) =>
       _withApi(
         (api) => api.patch(
@@ -125,6 +132,7 @@ class Api {
           encoding: encoding,
           cancelToken: cancelToken,
           options: options,
+          responseEncoding: responseEncoding,
         ),
         retryConfig: retryConfig,
       );
@@ -137,6 +145,7 @@ class Api {
     CancelToken? cancelToken,
     ConnectionOption? options,
     RetryConfig? retryConfig,
+    Encoding? responseEncoding,
   }) =>
       _withApi(
         (api) => api.delete(
@@ -146,6 +155,7 @@ class Api {
           encoding: encoding,
           cancelToken: cancelToken,
           options: options,
+          responseEncoding: responseEncoding,
         ),
         retryConfig: retryConfig,
       );
@@ -158,6 +168,7 @@ class Api {
     CancelToken? cancelToken,
     ConnectionOption? options,
     OnProgressCallback? onUploadProgress,
+    Encoding? responseEncoding,
     bool useIsolate = false,
   }) {
     if (useIsolate) {
@@ -171,6 +182,7 @@ class Api {
             cancelToken: cancelToken,
             options: options,
             onUploadProgress: onUploadProgress,
+            responseEncoding: responseEncoding,
           ),
           forUpload: true,
         ),
@@ -185,6 +197,7 @@ class Api {
           cancelToken: cancelToken,
           options: options,
           onUploadProgress: onUploadProgress,
+          responseEncoding: responseEncoding,
         ),
         forUpload: true,
       );

@@ -26,6 +26,7 @@ class RetryClient extends SingleRequestClient {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) async {
     print("sending with retrying");
     ApiRequest? request;
@@ -78,7 +79,10 @@ class RetryClient extends SingleRequestClient {
 
         if (!continueRetry) {
           _retryToken?.expire();
-          return ApiResponse.fromStream(resBody);
+          return ApiResponse.fromStream(
+            resBody,
+            defaultEncoding: responseEncoding,
+          );
         }
       }
 

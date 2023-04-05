@@ -16,16 +16,21 @@ abstract class BaseResponse {
   final bool isRedirect;
 
   final bool persistentConnection;
+  final Encoding? defaultEncoding;
 
   const BaseResponse({
     required this.isRedirect,
     required this.statusCode,
     required this.headers,
     required this.persistentConnection,
+    this.defaultEncoding,
     this.contentLength,
     this.statusMessage,
     this.request,
   });
 
-  Encoding get encoding => ContentTypeHelper.getEncodingFromHeaders(headers);
+  Encoding get encoding => ContentTypeHelper.getEncodingFromHeaders(
+        headers,
+        fallbackEncoding: defaultEncoding,
+      );
 }

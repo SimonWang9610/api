@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import '../models/byte_stream.dart';
@@ -18,9 +19,13 @@ class ApiResponse extends BaseResponse {
     super.contentLength,
     super.statusMessage,
     super.request,
+    super.defaultEncoding,
   });
 
-  static Future<ApiResponse> fromStream(ResponseBody resBody) async {
+  static Future<ApiResponse> fromStream(
+    ResponseBody resBody, {
+    Encoding? defaultEncoding,
+  }) async {
     final bytes = await resBody.stream.toBytes();
     return ApiResponse(
       bytes,
@@ -31,6 +36,7 @@ class ApiResponse extends BaseResponse {
       request: resBody.request,
       contentLength: resBody.contentLength,
       statusMessage: resBody.statusMessage,
+      defaultEncoding: defaultEncoding,
     );
   }
 

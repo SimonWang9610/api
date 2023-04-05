@@ -34,10 +34,13 @@ abstract class Client {
 
   factory Client.multipart() => MultipartClient();
 
-  Future<ApiResponse> get(Uri url,
-          {Map<String, String>? headers,
-          CancelToken? cancelToken,
-          ConnectionOption? options}) =>
+  Future<ApiResponse> get(
+    Uri url, {
+    Map<String, String>? headers,
+    CancelToken? cancelToken,
+    ConnectionOption? options,
+    Encoding? responseEncoding,
+  }) =>
       throw UnimplementedError(
           "[$runtimeType not implemented upload. Please using [SingleRequestClient]/[RetryClient]]");
 
@@ -57,6 +60,7 @@ abstract class Client {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) =>
       throw UnimplementedError(
           "[$runtimeType not implemented upload. Please using [SingleRequestClient]/[RetryClient]]");
@@ -66,6 +70,7 @@ abstract class Client {
     Map<String, String>? headers,
     Object? body,
     Encoding? encoding,
+    Encoding? responseEncoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
   }) =>
@@ -79,6 +84,7 @@ abstract class Client {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) =>
       throw UnimplementedError(
           "[$runtimeType not implemented upload. Please using [SingleRequestClient]/[RetryClient]]");
@@ -90,6 +96,7 @@ abstract class Client {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) =>
       throw UnimplementedError(
           "[$runtimeType not implemented upload. Please using [SingleRequestClient]/[RetryClient]]");
@@ -101,6 +108,7 @@ abstract class Client {
     Map<String, String>? headers,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
     OnProgressCallback? onUploadProgress,
   }) =>
       throw UnimplementedError(
