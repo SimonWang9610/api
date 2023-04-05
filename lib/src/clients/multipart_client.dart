@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import '../models/models.dart';
 import '../multipart/form_data.dart';
@@ -19,6 +20,7 @@ class MultipartClient extends Client with HttpAdapterManager {
     Map<String, String>? headers,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
     OnProgressCallback? onUploadProgress,
   }) =>
       create(
@@ -28,6 +30,7 @@ class MultipartClient extends Client with HttpAdapterManager {
         formData: formData,
         cancelToken: cancelToken,
         options: options,
+        responseEncoding: responseEncoding,
         onUploadProgress: onUploadProgress,
       );
 
@@ -38,6 +41,7 @@ class MultipartClient extends Client with HttpAdapterManager {
     required FormData formData,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
     OnProgressCallback? onUploadProgress,
   }) async {
     final request = _createMultipartRequest(
@@ -57,7 +61,8 @@ class MultipartClient extends Client with HttpAdapterManager {
     late ApiResponse res;
     try {
       final resBody = await sendRequest(request, cancelToken);
-      res = await ApiResponse.fromStream(resBody);
+      res = await ApiResponse.fromStream(resBody,
+          defaultEncoding: responseEncoding);
     } catch (e) {
       throw assureApiError(e);
     } finally {

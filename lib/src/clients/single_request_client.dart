@@ -19,12 +19,14 @@ class SingleRequestClient extends Client with HttpAdapterManager {
     Map<String, String>? headers,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) =>
       create(
         ApiMethod.get,
         url,
         headers,
         cancelToken: cancelToken,
+        responseEncoding: responseEncoding,
         options: options,
       );
 
@@ -51,6 +53,7 @@ class SingleRequestClient extends Client with HttpAdapterManager {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) =>
       create(
         ApiMethod.post,
@@ -59,6 +62,7 @@ class SingleRequestClient extends Client with HttpAdapterManager {
         body: body,
         encoding: encoding,
         cancelToken: cancelToken,
+        responseEncoding: responseEncoding,
         options: options,
       );
 
@@ -70,6 +74,7 @@ class SingleRequestClient extends Client with HttpAdapterManager {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) =>
       create(
         ApiMethod.put,
@@ -78,6 +83,7 @@ class SingleRequestClient extends Client with HttpAdapterManager {
         body: body,
         encoding: encoding,
         cancelToken: cancelToken,
+        responseEncoding: responseEncoding,
         options: options,
       );
 
@@ -89,6 +95,7 @@ class SingleRequestClient extends Client with HttpAdapterManager {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) =>
       create(
         ApiMethod.patch,
@@ -97,6 +104,7 @@ class SingleRequestClient extends Client with HttpAdapterManager {
         body: body,
         encoding: encoding,
         cancelToken: cancelToken,
+        responseEncoding: responseEncoding,
         options: options,
       );
 
@@ -108,6 +116,7 @@ class SingleRequestClient extends Client with HttpAdapterManager {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) =>
       create(
         ApiMethod.delete,
@@ -116,6 +125,7 @@ class SingleRequestClient extends Client with HttpAdapterManager {
         body: body,
         encoding: encoding,
         cancelToken: cancelToken,
+        responseEncoding: responseEncoding,
         options: options,
       );
 
@@ -153,6 +163,7 @@ class SingleRequestClient extends Client with HttpAdapterManager {
     Encoding? encoding,
     CancelToken? cancelToken,
     ConnectionOption? options,
+    Encoding? responseEncoding,
   }) async {
     final request = createApiRequest(method, url,
         headers: headers, encoding: encoding, body: body);
@@ -166,7 +177,10 @@ class SingleRequestClient extends Client with HttpAdapterManager {
     late ApiResponse res;
     try {
       final resBody = await sendRequest(request, cancelToken);
-      res = await ApiResponse.fromStream(resBody);
+      res = await ApiResponse.fromStream(
+        resBody,
+        defaultEncoding: responseEncoding,
+      );
     } catch (e) {
       throw assureApiError(e);
     } finally {

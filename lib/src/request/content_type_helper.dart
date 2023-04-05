@@ -75,9 +75,10 @@ class ContentTypeHelper {
     }
   }
 
-  static Encoding getEncodingFromHeaders(Map<String, String> headers) {
+  static Encoding getEncodingFromHeaders(Map<String, String> headers,
+      {Encoding? fallbackEncoding}) {
     final mediaType =
         getMediaType(headers) ?? MediaType("application", 'octet-stream');
-    return getEncoding(mediaType, latin1);
+    return getEncoding(mediaType, fallbackEncoding ?? latin1);
   }
 }
